@@ -1,6 +1,32 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CS2 Trading Platform
 
-## Getting Started
+A modern Counter-Strike 2 trading platform built with Next.js 15, featuring a beautiful UI with animations and comprehensive theming support.
+
+## ✨ Features
+
+- 🎨 **Modern UI**: Built with shadcn/ui components and Tailwind CSS
+- 🌙 **Dark/Light Theme**: Complete theme support with system preference detection
+- 🎭 **Animations**: Smooth animations powered by Framer Motion
+- 📱 **Responsive**: Mobile-first responsive design
+- 🚀 **Performance**: Optimized with Next.js 15 and Turbopack
+- 🔧 **Developer Experience**: TypeScript, ESLint, and modern tooling
+- 📊 **State Management**: React Query for server state management
+- 🎯 **Form Handling**: React Hook Form with Zod validation
+
+## 🛠️ Tech Stack
+
+- **Framework**: Next.js 15 with App Router
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS v4
+- **UI Components**: shadcn/ui
+- **Animations**: Framer Motion
+- **Icons**: Lucide React
+- **State Management**: TanStack Query
+- **Forms**: React Hook Form + Zod
+- **Notifications**: Sonner
+- **Charts**: Recharts
+
+## 🚀 Getting Started
 
 First, run the development server:
 
@@ -16,9 +42,22 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+You can start editing the page by modifying `src/app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+
+## 📁 Project Structure
+
+```
+src/
+├── app/                 # Next.js app router
+├── components/          # React components
+│   ├── ui/             # shadcn/ui components
+│   └── providers/      # Context providers
+├── hooks/              # Custom React hooks
+├── lib/                # Utility functions and configs
+└── styles/             # Global styles
+```
 
 ## Learn More
 

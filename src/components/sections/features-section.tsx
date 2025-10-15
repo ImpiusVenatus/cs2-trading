@@ -8,13 +8,9 @@ import {
     Tag,
     Clock,
     Calculator,
-    Users,
-    TrendingUp,
-    Star,
-    CheckCircle
+    Star
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
@@ -202,8 +198,8 @@ export function FeaturesSection() {
                                     <Star
                                         key={i}
                                         className={`w-5 h-5 ${i < Math.floor(reviews.rating)
-                                                ? "text-yellow-500 fill-current"
-                                                : "text-muted-foreground"
+                                            ? "text-yellow-500 fill-current"
+                                            : "text-muted-foreground"
                                             }`}
                                     />
                                 ))}
@@ -221,3 +217,4 @@ export function FeaturesSection() {
         </section>
     );
 }
+

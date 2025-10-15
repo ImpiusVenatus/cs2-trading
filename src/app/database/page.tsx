@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Search, Filter, Eye, Star, ShoppingCart } from "lucide-react";
+import { Search, Eye, Star, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -88,7 +88,6 @@ const wearColors = {
 export default function DatabasePage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("All");
-    const [showFilters, setShowFilters] = useState(false);
 
     const categories = ["All", "Knives", "Rifles", "Pistols", "SMGs", "Heavy", "Gloves"];
 
@@ -274,3 +273,4 @@ export default function DatabasePage() {
         </div>
     );
 }
+

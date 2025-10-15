@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Star, ShoppingCart, Eye, Info, TrendingDown, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 interface ItemCardProps {
     name: string;
@@ -18,6 +19,7 @@ interface ItemCardProps {
     status?: "online" | "offline";
     expiresIn?: string;
     className?: string;
+    rarity?: string;
 }
 
 export function ItemCard({
@@ -33,6 +35,7 @@ export function ItemCard({
     status = "offline",
     expiresIn,
     className,
+    rarity = "Consumer",
 }: ItemCardProps) {
     const formatPrice = (price: number) => {
         return new Intl.NumberFormat('en-US', {
@@ -46,10 +49,55 @@ export function ItemCard({
         return status === "online" ? "bg-green-500" : "bg-gray-500";
     };
 
+    const getRarityColor = (rarity: string) => {
+        switch (rarity.toLowerCase()) {
+            case 'contraband':
+                return {
+                    border: 'border-yellow-400',
+                    gradient: 'from-yellow-400/30 via-yellow-400/15 to-transparent',
+                    bottomBorder: 'bg-yellow-400'
+                };
+            case 'covert':
+                return {
+                    border: 'border-red-500',
+                    gradient: 'from-red-500/30 via-red-500/15 to-transparent',
+                    bottomBorder: 'bg-red-500'
+                };
+            case 'classified':
+                return {
+                    border: 'border-purple-500',
+                    gradient: 'from-purple-500/30 via-purple-500/15 to-transparent',
+                    bottomBorder: 'bg-purple-500'
+                };
+            case 'restricted':
+                return {
+                    border: 'border-blue-500',
+                    gradient: 'from-blue-500/30 via-blue-500/15 to-transparent',
+                    bottomBorder: 'bg-blue-500'
+                };
+            case 'mil-spec':
+                return {
+                    border: 'border-blue-400',
+                    gradient: 'from-blue-400/30 via-blue-400/15 to-transparent',
+                    bottomBorder: 'bg-blue-400'
+                };
+            case 'consumer':
+            default:
+                return {
+                    border: 'border-gray-500',
+                    gradient: 'from-gray-500/30 via-gray-500/15 to-transparent',
+                    bottomBorder: 'bg-gray-500'
+                };
+        }
+    };
+
+    const rarityColors = getRarityColor(rarity);
+
     return (
         <motion.div
             className={cn(
                 "group relative bg-card border border-border rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300",
+                rarityColors.border,
                 className
             )}
             whileHover={{ y: -4 }}
@@ -57,6 +105,17 @@ export function ItemCard({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
         >
+            {/* Rarity Gradient Background */}
+            <div className={cn(
+                "absolute inset-0 bg-gradient-to-t opacity-30 group-hover:opacity-50 transition-opacity duration-300",
+                rarityColors.gradient
+            )} />
+
+            {/* Rarity Bottom Border */}
+            <div className={cn(
+                "absolute bottom-0 left-0 right-0 h-0.5",
+                rarityColors.bottomBorder
+            )} />
             {/* Special Badges */}
             <div className="absolute top-2 left-2 z-10 flex space-x-1">
                 {isStatTrak && (
@@ -79,10 +138,15 @@ export function ItemCard({
             {/* Item Image */}
             <div className="relative aspect-square bg-muted/20 flex items-center justify-center overflow-hidden">
                 {imageUrl ? (
-                    <img
+                    <Image
                         src={imageUrl}
                         alt={name}
-                        className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                        fill
+                        className="object-contain group-hover:scale-105 transition-transform duration-300"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                        }}
                     />
                 ) : (
                     <div className="text-muted-foreground text-center">

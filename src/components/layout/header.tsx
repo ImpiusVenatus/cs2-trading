@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { Search, Bell, User, Globe, ChevronDown } from "lucide-react";
+import { Search, Bell, User, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -133,3 +132,4 @@ export function Header() {
         </header>
     );
 }
+

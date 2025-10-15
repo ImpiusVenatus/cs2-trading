@@ -153,3 +153,4 @@ export function FeaturedItems() {
         </section>
     );
 }
+

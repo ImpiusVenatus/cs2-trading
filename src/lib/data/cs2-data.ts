@@ -30,14 +30,6 @@ export interface CS2Item {
 function transformSteamData(item: SteamItem): CS2Item {
     const name = item.marketname || item.markethashname || 'Unknown Item';
 
-    // Debug: Log items that might be problematic
-    if (!item.marketname && !item.markethashname) {
-        console.warn('⚠️ Item missing name:', item);
-    }
-    if (!item.pricelatest) {
-        console.warn('⚠️ Item missing price:', item);
-    }
-
     // Extract condition from market name
     const conditionMatch = name.match(/\((Factory New|Minimal Wear|Field-Tested|Well-Worn|Battle-Scarred)\)/);
     const condition = conditionMatch ? conditionMatch[1] : 'Field-Tested';
@@ -136,24 +128,9 @@ export class CS2DataService {
 
     private static initialize() {
         if (!this.initialized) {
-            console.log('🚀 Initializing CS2DataService...');
-            console.log('📦 Raw JSON data length:', (steamData as SteamItem[]).length);
-
             this.items = (steamData as SteamItem[]).map(transformSteamData);
-
-            console.log('✅ Transformed items length:', this.items.length);
-            console.log('📊 Items by category:', this.getItemsByCategory());
-
             this.initialized = true;
         }
-    }
-
-    private static getItemsByCategory() {
-        const categoryCount: { [key: string]: number } = {};
-        this.items.forEach(item => {
-            categoryCount[item.category] = (categoryCount[item.category] || 0) + 1;
-        });
-        return categoryCount;
     }
 
     static getItems(params: {
@@ -170,27 +147,20 @@ export class CS2DataService {
 
         let filteredItems = [...this.items];
 
-        // Debug: Log initial count
-        console.log('🔍 Filtering items - Initial count:', filteredItems.length);
-
         // Apply search filter
         if (params.search) {
             const searchTerm = params.search.toLowerCase();
-            const beforeSearch = filteredItems.length;
             filteredItems = filteredItems.filter(item =>
                 item.name.toLowerCase().includes(searchTerm) ||
                 item.marketHashName.toLowerCase().includes(searchTerm)
             );
-            console.log(`🔍 Search filter: ${beforeSearch} → ${filteredItems.length} (search: "${params.search}")`);
         }
 
         // Apply category filter
         if (params.category) {
-            const beforeCategory = filteredItems.length;
             filteredItems = filteredItems.filter(item =>
                 item.category.toLowerCase() === params.category!.toLowerCase()
             );
-            console.log(`🔍 Category filter: ${beforeCategory} → ${filteredItems.length} (category: "${params.category}")`);
         }
 
         // Apply price filters
@@ -226,16 +196,6 @@ export class CS2DataService {
         const limit = params.limit || 20;
         const paginatedItems = filteredItems.slice(offset, offset + limit);
         const hasMore = offset + limit < filteredItems.length;
-
-        // Debug pagination in data service
-        console.log('📊 DataService Pagination:', {
-            totalItems: this.items.length,
-            filteredItems: filteredItems.length,
-            offset,
-            limit,
-            paginatedItems: paginatedItems.length,
-            hasMore
-        });
 
         return {
             items: paginatedItems,

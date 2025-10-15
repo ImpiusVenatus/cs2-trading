@@ -70,14 +70,6 @@ export default function MarketPage() {
             setHasMore(result.hasMore);
             setCurrentPage(page);
 
-            // Debug pagination
-            console.log('🔍 Pagination Debug:', {
-                page,
-                itemsLoaded: result.items.length,
-                totalItems: result.totalCount,
-                hasMore: result.hasMore,
-                reset
-            });
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to load items');
         } finally {
@@ -405,10 +397,6 @@ export default function MarketPage() {
             {/* Pagination Controls - Outside motion.div */}
             {items.length > 0 && (
                 <div className="flex items-center justify-center space-x-4 py-8">
-                    {/* Debug pagination state */}
-                    <div className="text-xs text-gray-500 mb-2">
-                        Debug: items={items.length}, hasMore={hasMore.toString()}, totalCount={totalCount}
-                    </div>
                     {hasMore ? (
                         <Button
                             onClick={loadMore}

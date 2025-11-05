@@ -1,4 +1,3 @@
-import { createClient } from "@/lib/supabase/server";
 import { createClient as createBrowserClient } from "@/lib/supabase/client";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -33,7 +32,7 @@ export async function uploadFile(
     const filePath = `${folder}/${userId}/${fileName}`;
     
     // Upload file to Supabase Storage
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
         .from(bucket)
         .upload(filePath, file, {
             cacheControl: "3600",

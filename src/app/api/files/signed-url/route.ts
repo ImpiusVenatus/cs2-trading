@@ -51,7 +51,7 @@ export async function POST(request: Request) {
         }
 
         // Generate new signed URL
-        const { url, expiresAt } = await getSignedUrl(fileRecord.storage_path, 3600);
+        const { url, expiresAt } = await getSignedUrl(supabase, fileRecord.storage_path, 3600);
 
         // Update file record with new signed URL
         await supabase

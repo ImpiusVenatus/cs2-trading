@@ -26,7 +26,7 @@ export function HeroSection() {
                                 className="text-5xl lg:text-7xl font-bold leading-tight"
                                 variants={fadeInUp}
                             >
-                                Bangladesh's Premier{" "}
+                                Bangladesh&apos;s Premier{" "}
                                 <span className="bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
                                     CS2 Marketplace
                                 </span>

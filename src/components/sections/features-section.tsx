@@ -176,7 +176,7 @@ export function FeaturesSection() {
                         <div>
                             <h2 className="text-4xl font-bold mb-4">Trusted by the Community</h2>
                             <p className="text-xl text-muted-foreground">
-                                Join Bangladesh's fastest growing CS2 trading community
+                                Join Bangladesh&apos;s fastest growing CS2 trading community
                             </p>
                         </div>
 

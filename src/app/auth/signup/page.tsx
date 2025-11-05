@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ShoppingBag, Store } from "lucide-react";
@@ -11,8 +10,7 @@ import { fadeInUp, staggerContainer } from "@/lib/animations";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
-export default function SignUpPage() {
-    const router = useRouter();
+function SignUpForm() {
     const [isLoading, setIsLoading] = useState(false);
     const [accountType, setAccountType] = useState<"buyer" | "seller" | null>(null);
 
@@ -148,5 +146,17 @@ export default function SignUpPage() {
                 </motion.div>
             </motion.div>
         </div>
+    );
+}
+
+export default function SignUpPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
+                <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+        }>
+            <SignUpForm />
+        </Suspense>
     );
 }

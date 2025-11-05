@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import { deleteFile } from "@/lib/storage/client";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -68,7 +67,11 @@ export async function POST(request: Request) {
 
         // Update profile to remove file URLs
         const fileTypes = [...new Set(fileRecords.map((f) => f.file_type))];
-        const profileUpdate: any = {};
+        const profileUpdate: {
+            profile_picture_url?: null;
+            nid_document_url?: null;
+            verification_status?: null;
+        } = {};
 
         if (fileTypes.includes("profile_picture")) {
             profileUpdate.profile_picture_url = null;

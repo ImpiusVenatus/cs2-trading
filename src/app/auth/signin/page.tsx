@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -10,8 +10,7 @@ import { fadeInUp, staggerContainer } from "@/lib/animations";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
-export default function SignInPage() {
-    const router = useRouter();
+function SignInForm() {
     const searchParams = useSearchParams();
     const [isLoading, setIsLoading] = useState(false);
     const redirectTo = searchParams.get("redirect") || "/profile";
@@ -126,6 +125,18 @@ export default function SignInPage() {
                 </motion.div>
             </motion.div>
         </div>
+    );
+}
+
+export default function SignInPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
+                <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+        }>
+            <SignInForm />
+        </Suspense>
     );
 }
 

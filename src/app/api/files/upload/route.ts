@@ -132,7 +132,7 @@ export async function POST(request: Request) {
         });
 
         // Test if we can query with RLS (this will verify auth.uid() works)
-        const { data: testQuery, error: testError } = await supabase
+        const { error: testError } = await supabase
             .from("files")
             .select("id")
             .eq("user_id", user.id)
@@ -189,7 +189,11 @@ export async function POST(request: Request) {
             fileType === "profile_picture" ? "profile_picture_url" : "nid_document_url";
 
         // If NID is uploaded, set verification status to pending
-        const profileUpdate: any = {
+        const profileUpdate: {
+            profile_picture_url?: string;
+            nid_document_url?: string;
+            verification_status?: "pending";
+        } = {
             [profileUpdateField]: signedUrl, // Use signed URL for now
         };
 

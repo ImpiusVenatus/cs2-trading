@@ -8,7 +8,8 @@ import {
     Tag,
     Clock,
     Calculator,
-    Star
+    Star,
+    CheckCircle
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -25,18 +26,18 @@ const features = [
     {
         icon: Percent,
         title: "Lowest Fees in Bangladesh",
-        description: "Dynamic fees from 0.5% to 3.5% - much lower than international platforms",
+        description: "Dynamic fees from 0.5% to 3.5% - keep more of your earnings",
         comparison: { competitor: "15%", us: "2%" },
     },
     {
-        icon: Gavel,
-        title: "Auctions",
-        description: "Bid on rare skins and get the best deals through our auction system",
+        icon: CheckCircle,
+        title: "Verified Sellers",
+        description: "All sellers are verified with NID - trade with confidence and security",
     },
     {
         icon: Tag,
-        title: "Bargains",
-        description: "Make offers on skins and negotiate directly with sellers",
+        title: "Direct Negotiation",
+        description: "Make offers and negotiate directly with sellers for the best prices",
     },
     {
         icon: Clock,
@@ -53,15 +54,15 @@ const features = [
 ];
 
 const stats = [
-    { label: "1B+ Indexed Skins", value: "1,000,000,000+" },
-    { label: "50K+ Users", value: "50,000+" },
-    { label: "$10M+ Sales", value: "$10,000,000+" },
-    { label: "$5M+ Listed Skins", value: "$5,000,000+" },
+    { label: "Active Listings", value: "10,000+" },
+    { label: "Verified Traders", value: "5,000+" },
+    { label: "Successful Trades", value: "50,000+" },
+    { label: "BDT Traded", value: "৳50M+" },
 ];
 
 const reviews = {
-    rating: 4.8,
-    count: "100+",
+    rating: 4.9,
+    count: "500+",
     status: "Excellent",
 };
 
@@ -79,9 +80,9 @@ export function FeaturesSection() {
                     {/* Platform Features Grid */}
                     <motion.div variants={fadeInUp} className="space-y-12">
                         <div className="text-center space-y-4">
-                            <h2 className="text-4xl font-bold">Platform Features</h2>
+                            <h2 className="text-4xl font-bold">Why Choose CS2Trade BD</h2>
                             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                                Everything you need for seamless CS2 trading in Bangladesh
+                                Built for the Bangladesh CS2 community - fast, secure, and affordable trading
                             </p>
                         </div>
 
@@ -173,9 +174,9 @@ export function FeaturesSection() {
                     {/* Trust Section */}
                     <motion.div variants={fadeInUp} className="text-center space-y-12">
                         <div>
-                            <h2 className="text-4xl font-bold mb-4">Trusted by our Users</h2>
+                            <h2 className="text-4xl font-bold mb-4">Trusted by the Community</h2>
                             <p className="text-xl text-muted-foreground">
-                                Join thousands of satisfied traders in Bangladesh
+                                Join Bangladesh's fastest growing CS2 trading community
                             </p>
                         </div>
 

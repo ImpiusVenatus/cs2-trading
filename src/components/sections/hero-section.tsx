@@ -26,19 +26,19 @@ export function HeroSection() {
                                 className="text-5xl lg:text-7xl font-bold leading-tight"
                                 variants={fadeInUp}
                             >
-                                Revolutionize Your{" "}
+                                Bangladesh's Premier{" "}
                                 <span className="bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
-                                    CS2 Trading
-                                </span>{" "}
-                                Experience
+                                    CS2 Marketplace
+                                </span>
                             </motion.h1>
                             <motion.p
                                 className="text-xl text-muted-foreground max-w-2xl"
                                 variants={fadeInUp}
                             >
-                                CS2Trade BD provides the most advanced marketplace and trading tools
-                                for the Bangladesh CS community. Buy and sell CS2 skins with unparalleled
-                                ease, security, and competitive rates.
+                                The trusted platform for buying and selling CS2 skins in Bangladesh. 
+                                List your items, connect with local buyers, and trade securely with 
+                                the lowest fees in the region. Join thousands of traders building the 
+                                CS2 community in Bangladesh.
                             </motion.p>
                         </div>
 
@@ -48,10 +48,10 @@ export function HeroSection() {
                             variants={fadeInUp}
                         >
                             <Button size="lg" className="text-lg px-8 py-6">
-                                Explore Marketplace
+                                Start Selling
                             </Button>
                             <Button size="lg" variant="outline" className="text-lg px-8 py-6">
-                                Browse Database
+                                Explore Marketplace
                             </Button>
                         </motion.div>
 
@@ -61,16 +61,16 @@ export function HeroSection() {
                             variants={fadeInUp}
                         >
                             <div className="text-center">
-                                <div className="text-2xl font-bold text-blue-500">1M+</div>
-                                <div className="text-sm text-muted-foreground">Items Listed</div>
+                                <div className="text-2xl font-bold text-blue-500">10K+</div>
+                                <div className="text-sm text-muted-foreground">Active Listings</div>
                             </div>
                             <div className="text-center">
-                                <div className="text-2xl font-bold text-green-500">50K+</div>
-                                <div className="text-sm text-muted-foreground">Active Traders</div>
+                                <div className="text-2xl font-bold text-green-500">5K+</div>
+                                <div className="text-sm text-muted-foreground">Verified Sellers</div>
                             </div>
                             <div className="text-center">
-                                <div className="text-2xl font-bold text-purple-500">$10M+</div>
-                                <div className="text-sm text-muted-foreground">Total Volume</div>
+                                <div className="text-2xl font-bold text-purple-500">৳50M+</div>
+                                <div className="text-sm text-muted-foreground">Traded Value</div>
                             </div>
                         </motion.div>
                     </motion.div>
@@ -173,4 +173,5 @@ export function HeroSection() {
         </section>
     );
 }
+
 

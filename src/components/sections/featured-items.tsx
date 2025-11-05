@@ -73,7 +73,7 @@ const mockItems = [
     },
 ];
 
-const tabs = ["Top Deals", "Newest Items", "Unique Items"];
+const tabs = ["Top Deals", "Newest Listings", "Premium Items"];
 
 export function FeaturedItems() {
     const [activeTab, setActiveTab] = useState("Top Deals");
@@ -90,9 +90,9 @@ export function FeaturedItems() {
                 >
                     {/* Section Header */}
                     <motion.div variants={fadeInUp} className="text-center space-y-4">
-                        <h2 className="text-4xl font-bold">Featured Items</h2>
+                        <h2 className="text-4xl font-bold">Featured Listings</h2>
                         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                            Discover the most popular and trending CS2 items in our marketplace
+                            Browse premium CS2 skins from verified sellers across Bangladesh
                         </p>
                     </motion.div>
 
@@ -153,4 +153,5 @@ export function FeaturedItems() {
         </section>
     );
 }
+
 

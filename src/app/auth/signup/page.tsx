@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { fadeInUp, staggerContainer } from "@/lib/animations";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import { getBaseUrl } from "@/lib/env";
 
 function SignUpForm() {
     const [isLoading, setIsLoading] = useState(false);
@@ -25,11 +26,15 @@ function SignUpForm() {
 
             // Store account type in sessionStorage to use in callback
             sessionStorage.setItem("signup_account_type", type);
+            
+            // Get base URL - will use NEXT_PUBLIC_SITE_URL in production or window.location.origin
+            const baseUrl = getBaseUrl();
+            const callbackUrl = `${baseUrl}/auth/callback?redirect=/profile&account_type=${type}`;
 
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: "google",
                 options: {
-                    redirectTo: `${window.location.origin}/auth/callback?redirect=/profile&account_type=${type}`,
+                    redirectTo: callbackUrl,
                 },
             });
 

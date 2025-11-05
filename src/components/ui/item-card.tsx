@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Star, ShoppingCart, Eye, Info, TrendingDown, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { BuyItemModal } from "@/components/market/buy-item-modal";
 
 interface ItemCardProps {
     name: string;
@@ -37,6 +39,8 @@ export function ItemCard({
     className,
     rarity = "Consumer",
 }: ItemCardProps) {
+    const [isBuyModalOpen, setIsBuyModalOpen] = useState(false);
+
     const formatPrice = (price: number) => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
@@ -160,7 +164,14 @@ export function ItemCard({
                     <Button size="sm" variant="secondary">
                         <Eye className="w-4 h-4" />
                     </Button>
-                    <Button size="sm" variant="secondary">
+                    <Button 
+                        size="sm" 
+                        variant="secondary"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setIsBuyModalOpen(true);
+                        }}
+                    >
                         <ShoppingCart className="w-4 h-4" />
                     </Button>
                     <Button size="sm" variant="secondary">
@@ -199,7 +210,14 @@ export function ItemCard({
                         )}
                     </div>
                     <div className="text-right">
-                        <Button size="sm" className="text-xs">
+                        <Button 
+                            size="sm" 
+                            className="text-xs"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setIsBuyModalOpen(true);
+                            }}
+                        >
                             Buy Now
                         </Button>
                     </div>
@@ -224,6 +242,13 @@ export function ItemCard({
                     </div>
                 )}
             </div>
+
+            <BuyItemModal
+                open={isBuyModalOpen}
+                onOpenChange={setIsBuyModalOpen}
+                itemName={name}
+                itemPrice={price}
+            />
         </motion.div>
     );
 }

@@ -32,6 +32,12 @@ const nextConfig: NextConfig = {
         hostname: 'steamcdn-a.akamaihd.net',
         port: '',
         pathname: '/economy/image/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'ekorvtdrcmpmsqpuljrl.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/**',
       }
     ],
   },

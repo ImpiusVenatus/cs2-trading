@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { FileText, Upload, CheckCircle2 } from "lucide-react";
+import { FileText, Upload, CheckCircle2, AlertCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,8 +12,9 @@ import { toast } from "sonner";
 
 export function VerificationDocumentsSection() {
     const { profile, loading } = useProfile();
-    const [isSaving, setIsSaving] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
     const [nidUrl, setNidUrl] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (profile?.nid_document_url) {
@@ -21,45 +22,71 @@ export function VerificationDocumentsSection() {
         }
     }, [profile]);
 
-    const handleNidUrlChange = async (url: string) => {
-        if (!url.trim()) return;
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
 
+        // Validate file type (images or PDF)
+        const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp", "application/pdf"];
+        if (!allowedTypes.includes(file.type)) {
+            toast.error("Please select an image file (JPG, PNG, WebP) or PDF");
+            return;
+        }
+
+        // Validate file size (5MB max)
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error("File size must be less than 5MB");
+            return;
+        }
+
+        handleFileUpload(file);
+    };
+
+    const handleFileUpload = async (file: File) => {
         try {
-            setIsSaving(true);
-            const response = await fetch("/api/profile", {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    nid_document_url: url,
-                    verification_status: "pending", // Set to pending when NID is uploaded
-                }),
+            setIsUploading(true);
+
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("fileType", "nid_document");
+
+            const response = await fetch("/api/files/upload", {
+                method: "POST",
+                body: formData,
             });
 
             if (!response.ok) {
                 const error = await response.json();
-                throw new Error(error.error || "Failed to save NID document");
+                throw new Error(error.error || "Failed to upload NID document");
             }
 
-            setNidUrl(url);
-            toast.success("NID document URL saved. Your verification will be reviewed.");
+            const data = await response.json();
+            setNidUrl(data.file.url);
+            toast.success("NID document uploaded. Your verification will be reviewed.");
+            
+            // Refresh profile to get updated data
+            window.location.reload();
         } catch (error) {
-            console.error("Error updating NID document:", error);
-            toast.error(error instanceof Error ? error.message : "Failed to update NID document");
+            console.error("Error uploading NID document:", error);
+            toast.error(error instanceof Error ? error.message : "Failed to upload NID document");
         } finally {
-            setIsSaving(false);
+            setIsUploading(false);
+            // Reset file input
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
         }
     };
 
     const handleRemoveNid = async () => {
+        if (!profile?.nid_document_url) return;
+
         try {
-            setIsSaving(true);
-            const response = await fetch("/api/profile", {
-                method: "PATCH",
+            setIsUploading(true);
+            const response = await fetch("/api/files/delete", {
+                method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    nid_document_url: null,
-                    verification_status: null,
-                }),
+                body: JSON.stringify({ fileType: "nid_document" }),
             });
 
             if (!response.ok) {
@@ -69,16 +96,20 @@ export function VerificationDocumentsSection() {
 
             setNidUrl(null);
             toast.success("NID document removed");
+            
+            // Refresh profile to get updated data
+            window.location.reload();
         } catch (error) {
             console.error("Error removing NID document:", error);
             toast.error(error instanceof Error ? error.message : "Failed to remove NID document");
         } finally {
-            setIsSaving(false);
+            setIsUploading(false);
         }
     };
 
     const isVerified = profile?.verification_status === "verified";
     const verificationStatus = profile?.verification_status;
+    const isPending = verificationStatus === "pending";
 
     return (
         <motion.div variants={fadeInUp}>
@@ -98,23 +129,23 @@ export function VerificationDocumentsSection() {
                             <Label htmlFor="nid" className="text-base font-medium">
                                 National ID Card (NID)
                             </Label>
-                            {isVerified && (
+                            {isVerified ? (
                                 <div className="flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400">
                                     <CheckCircle2 className="w-4 h-4" />
                                     <span>Verified</span>
                                 </div>
-                            )}
-                            {verificationStatus === "pending" && (
-                                <div className="flex items-center gap-1.5 text-sm text-yellow-600 dark:text-yellow-400">
-                                    <CheckCircle2 className="w-4 h-4" />
+                            ) : isPending ? (
+                                <div className="flex items-center gap-1.5 text-sm text-blue-600 dark:text-blue-400">
+                                    <AlertCircle className="w-4 h-4" />
                                     <span>Pending Review</span>
                                 </div>
-                            )}
-                            {verificationStatus === "rejected" && (
-                                <div className="flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400">
-                                    <CheckCircle2 className="w-4 h-4" />
-                                    <span>Rejected</span>
-                                </div>
+                            ) : (
+                                profile && (
+                                    <div className="flex items-center gap-1.5 text-sm text-yellow-600 dark:text-yellow-400">
+                                        <AlertCircle className="w-4 h-4" />
+                                        <span>Unverified</span>
+                                    </div>
+                                )
                             )}
                         </div>
                         {!nidUrl ? (
@@ -126,21 +157,39 @@ export function VerificationDocumentsSection() {
                                     <div className="text-center">
                                         <p className="text-sm font-medium mb-1">Upload NID Document</p>
                                         <p className="text-xs text-muted-foreground">
-                                            Paste your Backblaze URL here (we'll set up upload later)
+                                            JPG, PNG, WebP or PDF. Max size 5MB
                                         </p>
                                     </div>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => {
-                                            const url = prompt("Enter Backblaze URL for NID document:");
-                                            if (url) handleNidUrlChange(url);
-                                        }}
-                                        disabled={isSaving || loading}
-                                    >
-                                        {isSaving ? "Saving..." : "Add URL"}
-                                    </Button>
+                                    <label htmlFor="nid" className="cursor-pointer">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            disabled={isUploading || loading}
+                                            onClick={() => fileInputRef.current?.click()}
+                                        >
+                                            {isUploading ? (
+                                                <>
+                                                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mr-2" />
+                                                    Uploading...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Upload className="w-4 h-4 mr-2" />
+                                                    Choose File
+                                                </>
+                                            )}
+                                        </Button>
+                                        <input
+                                            id="nid"
+                                            ref={fileInputRef}
+                                            type="file"
+                                            accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf"
+                                            onChange={handleFileSelect}
+                                            className="hidden"
+                                            disabled={isUploading || loading}
+                                        />
+                                    </label>
                                 </div>
                             </div>
                         ) : (
@@ -152,8 +201,8 @@ export function VerificationDocumentsSection() {
                                         </div>
                                         <div>
                                             <p className="text-sm font-medium">NID Document</p>
-                                            <p className="text-xs text-muted-foreground truncate max-w-xs">
-                                                {nidUrl}
+                                            <p className="text-xs text-muted-foreground">
+                                                Uploaded
                                             </p>
                                         </div>
                                     </div>
@@ -163,8 +212,9 @@ export function VerificationDocumentsSection() {
                                         size="sm"
                                         onClick={handleRemoveNid}
                                         className="text-destructive hover:text-destructive"
-                                        disabled={isSaving}
+                                        disabled={isUploading || loading}
                                     >
+                                        <X className="w-4 h-4 mr-2" />
                                         Remove
                                     </Button>
                                 </div>

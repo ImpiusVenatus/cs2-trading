@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -20,6 +21,14 @@ export function Header() {
     const router = useRouter();
     const { user, loading } = useUser();
     const { profile } = useProfile();
+    const [desktopImageLoading, setDesktopImageLoading] = useState(true);
+    const [mobileImageLoading, setMobileImageLoading] = useState(true);
+
+    // Reset loading state when profile picture URL changes
+    useEffect(() => {
+        setDesktopImageLoading(true);
+        setMobileImageLoading(true);
+    }, [profile?.profile_picture_url]);
 
     const handleSignOut = async () => {
         const supabase = createClient();
@@ -51,7 +60,7 @@ export function Header() {
                         {/* Logo */}
                         <Link href="/" className="flex items-center space-x-2">
                             <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                                <span className="text-white font-bold text-lg">f</span>
+                                <span className="text-white font-bold text-lg">C</span>
                             </div>
                             <span className="font-bold text-xl hidden sm:block">CS2Trade BD</span>
                         </Link>
@@ -96,13 +105,22 @@ export function Header() {
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" size="sm" className="hidden sm:flex items-center gap-2">
                                             {profile?.profile_picture_url ? (
-                                                <Image
-                                                    src={profile.profile_picture_url}
-                                                    alt="Profile"
-                                                    width={24}
-                                                    height={24}
-                                                    className="rounded-full object-cover"
-                                                />
+                                                <div className="relative w-6 h-6">
+                                                    {desktopImageLoading && (
+                                                        <div className="absolute inset-0 flex items-center justify-center">
+                                                            <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                                                        </div>
+                                                    )}
+                                                    <Image
+                                                        src={profile.profile_picture_url}
+                                                        alt="Profile"
+                                                        width={24}
+                                                        height={24}
+                                                        className="rounded-full object-cover"
+                                                        onLoad={() => setDesktopImageLoading(false)}
+                                                        onError={() => setDesktopImageLoading(false)}
+                                                    />
+                                                </div>
                                             ) : (
                                                 <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
                                                     {getAvatarInitial()}
@@ -131,13 +149,22 @@ export function Header() {
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" size="sm" className="md:hidden">
                                             {profile?.profile_picture_url ? (
-                                                <Image
-                                                    src={profile.profile_picture_url}
-                                                    alt="Profile"
-                                                    width={24}
-                                                    height={24}
-                                                    className="rounded-full object-cover"
-                                                />
+                                                <div className="relative w-6 h-6">
+                                                    {mobileImageLoading && (
+                                                        <div className="absolute inset-0 flex items-center justify-center">
+                                                            <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                                                        </div>
+                                                    )}
+                                                    <Image
+                                                        src={profile.profile_picture_url}
+                                                        alt="Profile"
+                                                        width={24}
+                                                        height={24}
+                                                        className="rounded-full object-cover"
+                                                        onLoad={() => setMobileImageLoading(false)}
+                                                        onError={() => setMobileImageLoading(false)}
+                                                    />
+                                                </div>
                                             ) : (
                                                 <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
                                                     {getAvatarInitial()}

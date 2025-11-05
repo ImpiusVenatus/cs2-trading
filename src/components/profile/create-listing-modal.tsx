@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { Search, DollarSign, Link2, FileText, Info } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, DollarSign, Link2, FileText, Info, AlertCircle } from "lucide-react";
+import { useProfile } from "@/lib/supabase/hooks";
+import { hasMinimumInfo } from "@/lib/supabase/profile-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,6 +39,18 @@ const conditions = [
 
 export function CreateListingModal({ open, onOpenChange }: CreateListingModalProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const { profile } = useProfile();
+
+    const isSeller = profile?.account_type === "seller" || profile?.account_type === "both";
+    const isVerified = profile?.verification_status === "verified";
+    const hasMinInfo = hasMinimumInfo(profile);
+    const canCreate = isSeller && isVerified && hasMinInfo;
+
+    useEffect(() => {
+        if (open && !canCreate) {
+            onOpenChange(false);
+        }
+    }, [open, canCreate, onOpenChange]);
     const [formData, setFormData] = useState({
         itemName: "",
         condition: "",

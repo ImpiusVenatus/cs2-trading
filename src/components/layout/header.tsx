@@ -1,11 +1,46 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Bell, User } from "lucide-react";
+import Image from "next/image";
+import { Bell, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useUser, useProfile } from "@/lib/supabase/hooks";
+import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
 
 export function Header() {
+    const router = useRouter();
+    const { user, loading } = useUser();
+    const { profile } = useProfile();
+
+    const handleSignOut = async () => {
+        const supabase = createClient();
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+            toast.error("Failed to sign out");
+        } else {
+            router.push("/");
+            router.refresh();
+        }
+    };
+
+    const getAvatarInitial = () => {
+        if (profile?.full_name) {
+            return profile.full_name.charAt(0).toUpperCase();
+        }
+        if (user?.email) {
+            return user.email.charAt(0).toUpperCase();
+        }
+        return "?";
+    };
 
     return (
         <header className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border sticky top-0 z-50">
@@ -41,31 +76,107 @@ export function Header() {
                     {/* Right Side Actions */}
                     <div className="flex items-center space-x-4">
                         {/* Notifications */}
-                        <Button variant="ghost" size="sm" className="hidden sm:flex">
-                            <Bell className="w-4 h-4" />
-                        </Button>
+                        {user && (
+                            <Button variant="ghost" size="sm" className="hidden sm:flex">
+                                <Bell className="w-4 h-4" />
+                            </Button>
+                        )}
+
 
                         {/* Theme Toggle */}
                         <ThemeToggle />
 
-                        {/* Sign In Button */}
-                        <Button asChild className="hidden sm:flex">
-                            <Link href="/auth/signin">
-                                <User className="w-4 h-4 mr-2" />
-                                Sign In
-                            </Link>
-                        </Button>
-
-                        {/* Mobile Menu Button */}
-                        <Button variant="ghost" size="sm" className="md:hidden" asChild>
-                            <Link href="/auth/signin">
-                                <User className="w-4 h-4" />
-                            </Link>
-                        </Button>
+                        {/* User Menu or Sign In */}
+                        {loading ? (
+                            <div className="w-9 h-9" />
+                        ) : user ? (
+                            <>
+                                {/* Desktop Avatar */}
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="sm" className="hidden sm:flex items-center gap-2">
+                                            {profile?.profile_picture_url ? (
+                                                <Image
+                                                    src={profile.profile_picture_url}
+                                                    alt="Profile"
+                                                    width={24}
+                                                    height={24}
+                                                    className="rounded-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                                                    {getAvatarInitial()}
+                                                </div>
+                                            )}
+                                            <span className="max-w-[100px] truncate">
+                                                {profile?.full_name || user.email?.split("@")[0] || "Profile"}
+                                            </span>
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuItem asChild>
+                                            <Link href="/profile">
+                                                <User className="w-4 h-4 mr-2" />
+                                                Profile
+                                            </Link>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={handleSignOut}>
+                                            <LogOut className="w-4 h-4 mr-2" />
+                                            Sign Out
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                                {/* Mobile Avatar */}
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="sm" className="md:hidden">
+                                            {profile?.profile_picture_url ? (
+                                                <Image
+                                                    src={profile.profile_picture_url}
+                                                    alt="Profile"
+                                                    width={24}
+                                                    height={24}
+                                                    className="rounded-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                                                    {getAvatarInitial()}
+                                                </div>
+                                            )}
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuItem asChild>
+                                            <Link href="/profile">
+                                                <User className="w-4 h-4 mr-2" />
+                                                Profile
+                                            </Link>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={handleSignOut}>
+                                            <LogOut className="w-4 h-4 mr-2" />
+                                            Sign Out
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </>
+                        ) : (
+                            <>
+                                <Button asChild className="hidden sm:flex">
+                                    <Link href="/auth/signin">
+                                        <User className="w-4 h-4 mr-2" />
+                                        Sign In
+                                    </Link>
+                                </Button>
+                                <Button variant="ghost" size="sm" className="md:hidden" asChild>
+                                    <Link href="/auth/signin">
+                                        <User className="w-4 h-4" />
+                                    </Link>
+                                </Button>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>
         </header>
     );
 }
-

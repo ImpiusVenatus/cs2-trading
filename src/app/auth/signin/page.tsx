@@ -1,22 +1,44 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Chrome } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
+import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
 
 export default function SignInPage() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
     const [isLoading, setIsLoading] = useState(false);
+    const redirectTo = searchParams.get("redirect") || "/profile";
 
-    const handleGoogleSignIn = () => {
-        setIsLoading(true);
-        // Placeholder for future Google sign-in implementation
-        setTimeout(() => {
+    const handleGoogleSignIn = async () => {
+        try {
+            setIsLoading(true);
+            const supabase = createClient();
+
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: "google",
+                options: {
+                    redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`,
+                },
+            });
+
+            if (error) {
+                toast.error("Failed to sign in", {
+                    description: error.message,
+                });
+                setIsLoading(false);
+            }
+        } catch (error) {
+            console.error("Sign in error:", error);
+            toast.error("An unexpected error occurred");
             setIsLoading(false);
-        }, 1000);
+        }
     };
 
     return (

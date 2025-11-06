@@ -1,52 +1,39 @@
 "use client";
-
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ItemCard } from "@/components/ui/item-card";
 import { Button } from "@/components/ui/button";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
-import { CS2DataService, type CS2Item } from "@/lib/data/cs2-data";
+type FeaturedItem = {
+    id: string;
+    name: string;
+    condition: string;
+    price: number;
+    priceChange?: number;
+    floatValue?: string;
+    patternIndex?: string;
+    imageUrl?: string;
+    isStatTrak?: boolean;
+    isSouvenir?: boolean;
+    status?: "online" | "offline";
+    rarity?: string;
+};
+
+const placeholderItems: FeaturedItem[] = [
+    { id: "ph-1", name: "AK-47 | Redline", condition: "Field-Tested", price: 120.0, priceChange: -5.2, floatValue: "0.2200000000", patternIndex: "#131", imageUrl: "/assets/rifle.png", isStatTrak: false, isSouvenir: false, status: "online", rarity: "Classified" },
+    { id: "ph-2", name: "M4A1-S | Golden Coil", condition: "Minimal Wear", price: 310.0, priceChange: 1.1, floatValue: "0.0900000000", patternIndex: "#027", imageUrl: "/assets/rifle-2.png", isStatTrak: true, isSouvenir: false, status: "online", rarity: "Covert" },
+    { id: "ph-3", name: "AWP | Asiimov", condition: "Battle-Scarred", price: 210.0, priceChange: -0.8, floatValue: "0.7800000000", patternIndex: "#005", imageUrl: "/assets/rifle-3.png", isStatTrak: false, isSouvenir: false, status: "online", rarity: "Covert" },
+    { id: "ph-4", name: "Glock-18 | Water Elemental", condition: "Field-Tested", price: 35.0, priceChange: 0.0, floatValue: "0.2500000000", patternIndex: "#090", imageUrl: "/assets/rifle.png", isStatTrak: false, isSouvenir: false, status: "online", rarity: "Classified" },
+    { id: "ph-5", name: "Desert Eagle | Mecha Industries", condition: "Minimal Wear", price: 78.5, priceChange: 0.6, floatValue: "0.1200000000", patternIndex: "#064", imageUrl: "/assets/rifle-2.png", isStatTrak: false, isSouvenir: false, status: "online", rarity: "Classified" },
+    { id: "ph-6", name: "USP-S | Kill Confirmed", condition: "Field-Tested", price: 160.0, priceChange: -1.3, floatValue: "0.2900000000", patternIndex: "#012", imageUrl: "/assets/rifle-3.png", isStatTrak: true, isSouvenir: false, status: "online", rarity: "Covert" },
+    { id: "ph-7", name: "AK-47 | Case Hardened", condition: "Well-Worn", price: 245.0, priceChange: 0.9, floatValue: "0.4200000000", patternIndex: "#321", imageUrl: "/assets/rifle.png", isStatTrak: false, isSouvenir: false, status: "online", rarity: "Classified" },
+    { id: "ph-8", name: "M4A4 | Howl", condition: "Field-Tested", price: 1250.0, priceChange: 2.3, floatValue: "0.2300000000", patternIndex: "#014", imageUrl: "/assets/rifle-2.png", isStatTrak: false, isSouvenir: false, status: "online", rarity: "Contraband" },
+];
 
 const tabs = ["Top Deals", "Newest Listings", "Premium Items"];
 
 export function FeaturedItems() {
-    const [activeTab, setActiveTab] = useState("Top Deals");
-    const [items, setItems] = useState<CS2Item[]>([]);
-
-    useEffect(() => {
-        // Load featured items based on active tab
-        let result;
-        switch (activeTab) {
-            case "Top Deals":
-                // Get items with price drops (negative priceChange)
-                result = CS2DataService.getItems({ limit: 8 });
-                // Filter and sort by best deals (negative price change)
-                const deals = result.items
-                    .filter(item => item.priceChange && item.priceChange < 0)
-                    .sort((a, b) => (a.priceChange || 0) - (b.priceChange || 0))
-                    .slice(0, 8);
-                setItems(deals.length > 0 ? deals : result.items.slice(0, 8));
-                break;
-            case "Newest Listings":
-                // Get newest items
-                result = CS2DataService.getItems({ limit: 8 });
-                setItems(result.items.slice(0, 8));
-                break;
-            case "Premium Items":
-                // Get high-value items
-                result = CS2DataService.getItems({ limit: 50 });
-                const premium = result.items
-                    .filter(item => item.price > 1000)
-                    .sort((a, b) => b.price - a.price)
-                    .slice(0, 8);
-                setItems(premium.length > 0 ? premium : result.items.slice(0, 8));
-                break;
-            default:
-                result = CS2DataService.getItems({ limit: 8 });
-                setItems(result.items.slice(0, 8));
-        }
-    }, [activeTab]);
+    const items = placeholderItems;
 
     return (
         <section className="py-20 bg-muted/20">
@@ -66,25 +53,7 @@ export function FeaturedItems() {
                         </p>
                     </motion.div>
 
-                    {/* Tabs */}
-                    <motion.div
-                        variants={fadeInUp}
-                        className="flex justify-center"
-                    >
-                        <div className="flex bg-muted rounded-lg p-1">
-                            {tabs.map((tab) => (
-                                <Button
-                                    key={tab}
-                                    variant={activeTab === tab ? "default" : "ghost"}
-                                    size="sm"
-                                    onClick={() => setActiveTab(tab)}
-                                    className="px-6"
-                                >
-                                    {tab}
-                                </Button>
-                            ))}
-                        </div>
-                    </motion.div>
+                    
 
                     {/* Items Grid */}
                     <motion.div

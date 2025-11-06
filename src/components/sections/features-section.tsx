@@ -9,7 +9,8 @@ import {
     Clock,
     Calculator,
     Star,
-    CheckCircle
+    CheckCircle,
+    Gift
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,37 +20,34 @@ import { fadeInUp, staggerContainer } from "@/lib/animations";
 const features = [
     {
         icon: Shield,
-        title: "Secure Peer-to-Peer Trades",
-        description: "Sellers send items directly to buyers on Steam, funds released after verification",
-        diagram: ["Seller", "CS2Trade BD", "Steam Trade", "Buyer"],
+        title: "Secure Middleman Service",
+        description: "We act as your trusted middleman for CS2 skin trades. Items sent via Steam, funds held securely until verification - protecting both buyers and sellers from scams",
+    },
+    {
+        icon: CheckCircle,
+        title: "Verified Sellers Only",
+        description: "All sellers are verified with NID to ensure legitimacy. Buy with confidence knowing every seller has been authenticated - no scams, no fraud",
+    },
+    {
+        icon: Tag,
+        title: "CS2 Skin Trading",
+        description: "Facilitate safe CS2 skin trades through our platform. We handle the transaction as middleman, ensuring items are delivered before funds are released",
     },
     {
         icon: Percent,
         title: "Lowest Fees in Bangladesh",
-        description: "Dynamic fees from 0.5% to 3.5% - keep more of your earnings",
+        description: "Dynamic fees from 0.5% to 3.5% - keep more of your earnings from every trade",
         comparison: { competitor: "15%", us: "2%" },
     },
     {
-        icon: CheckCircle,
-        title: "Verified Sellers",
-        description: "All sellers are verified with NID - trade with confidence and security",
+        icon: Gavel,
+        title: "Premium Subscriptions",
+        description: "Sellers can list and sell premium subscriptions like Netflix and Spotify. Buyers get instant access to verified subscription services",
     },
     {
-        icon: Tag,
-        title: "Direct Negotiation",
-        description: "Make offers and negotiate directly with sellers for the best prices",
-    },
-    {
-        icon: Clock,
-        title: "No Trade Holds",
-        description: "Avoid Steam's 7-day trade hold with our instant trading system",
-        highlight: "0 Days",
-    },
-    {
-        icon: Calculator,
-        title: "Fee Calculator",
-        description: "Calculate exactly how much you'll pay in fees before trading",
-        interactive: true,
+        icon: Gift,
+        title: "Steam Referral Codes",
+        description: "Trade Steam referral codes safely through our platform. Verified sellers offer legitimate codes with our middleman protection",
     },
 ];
 
@@ -80,9 +78,9 @@ export function FeaturesSection() {
                     {/* Platform Features Grid */}
                     <motion.div variants={fadeInUp} className="space-y-12">
                         <div className="text-center space-y-4">
-                            <h2 className="text-4xl font-bold">Why Choose CS2Trade BD</h2>
+                            <h2 className="text-4xl font-bold">Why Choose CS2BD</h2>
                             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                                Built for the Bangladesh CS2 community - fast, secure, and affordable trading
+                                We facilitate secure CS2 skin trades as your trusted middleman, connect you with verified sellers, and enable sales of premium subscriptions and Steam referral codes
                             </p>
                         </div>
 
@@ -101,66 +99,15 @@ export function FeaturesSection() {
                                         </CardHeader>
                                         <CardContent>
                                             {/* Special content for specific features */}
-                                            {feature.diagram && (
-                                                <div className="space-y-3">
-                                                    <div className="flex items-center justify-between text-sm">
-                                                        {feature.diagram.map((step, i) => (
-                                                            <div key={step} className="flex items-center">
-                                                                <div className="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium">
-                                                                    {step}
-                                                                </div>
-                                                                {i < feature.diagram.length - 1 && (
-                                                                    <div className="w-8 h-0.5 bg-border mx-2" />
-                                                                )}
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-
                                             {feature.comparison && (
                                                 <div className="space-y-3">
                                                     <div className="flex items-center justify-between">
                                                         <div className="text-sm text-muted-foreground">Competitors</div>
-                                                        <div className="text-lg font-bold text-red-500">{feature.comparison.competitor}</div>
+                                                        <div className="text-lg font-bold text-[#EF626C]">{feature.comparison.competitor}</div>
                                                     </div>
                                                     <div className="flex items-center justify-between">
-                                                        <div className="text-sm text-muted-foreground">CS2Trade BD</div>
-                                                        <div className="text-lg font-bold text-green-500">{feature.comparison.us}</div>
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {feature.highlight && (
-                                                <div className="text-center">
-                                                    <div className="text-3xl font-bold text-primary">{feature.highlight}</div>
-                                                </div>
-                                            )}
-
-                                            {feature.interactive && (
-                                                <div className="space-y-4">
-                                                    <div className="space-y-2">
-                                                        <Label htmlFor="sale-value">Sale Value</Label>
-                                                        <Input
-                                                            id="sale-value"
-                                                            type="text"
-                                                            placeholder="$10,000.00"
-                                                            defaultValue="$10,000.00"
-                                                        />
-                                                    </div>
-                                                    <div className="space-y-2 text-sm">
-                                                        <div className="flex justify-between">
-                                                            <span className="text-muted-foreground">Sales Fee:</span>
-                                                            <span className="font-medium">$200.00</span>
-                                                        </div>
-                                                        <div className="flex justify-between">
-                                                            <span className="text-muted-foreground">Withdraw Fee:</span>
-                                                            <span className="font-medium">$50.00</span>
-                                                        </div>
-                                                        <div className="border-t pt-2 flex justify-between font-semibold">
-                                                            <span>Total Fees:</span>
-                                                            <span>$250.00</span>
-                                                        </div>
+                                                        <div className="text-sm text-muted-foreground">CS2BD</div>
+                                                        <div className="text-lg font-bold text-[#84DCCF]">{feature.comparison.us}</div>
                                                     </div>
                                                 </div>
                                             )}
@@ -199,7 +146,7 @@ export function FeaturesSection() {
                                     <Star
                                         key={i}
                                         className={`w-5 h-5 ${i < Math.floor(reviews.rating)
-                                            ? "text-yellow-500 fill-current"
+                                            ? "text-[#EF626C] fill-current"
                                             : "text-muted-foreground"
                                             }`}
                                     />

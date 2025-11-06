@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useLayoutEffect } from "react";
 import { motion } from "framer-motion";
 import { User, Mail, Phone, MapPin, Save, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,11 +24,13 @@ type Division = { id: number; name: string };
 type District = { id: number; name: string; division_id: number };
 
 export function PersonalInformationForm() {
-    const { profile, loading } = useProfile();
-    const { user } = useUser();
+    const { profile, loading: profileLoading, setProfile } = useProfile();
+    const { user, loading: userLoading } = useUser();
     const [isSaving, setIsSaving] = useState(false);
     const [divisions, setDivisions] = useState<Division[]>([]);
+    const [divisionsLoading, setDivisionsLoading] = useState(true);
     const [districts, setDistricts] = useState<District[]>([]);
+    const [districtsLoading, setDistrictsLoading] = useState(true);
     const [selectedDivisionId, setSelectedDivisionId] = useState<number | null>(null);
 
     const [formData, setFormData] = useState({
@@ -42,11 +44,27 @@ export function PersonalInformationForm() {
         bio: "",
     });
 
+    // Load divisions on mount
     useEffect(() => {
+        const loadDivisions = async () => {
+            setDivisionsLoading(true);
+            const supabase = createClient();
+            const { data } = await supabase.from("divisions").select("id, name").order("name", { ascending: true });
+            setDivisions(data || []);
+            setDivisionsLoading(false);
+        };
+        loadDivisions();
+    }, []);
+
+    // Initialize form data once profile and divisions are loaded (before paint to avoid placeholder flash)
+    useLayoutEffect(() => {
+        // Wait for both profile and divisions to be ready
+        if (divisionsLoading || profileLoading || userLoading) return;
+
         if (profile) {
             setFormData({
                 fullName: profile.full_name || "",
-                email: user?.email || profile.email || "", // Get email from auth user first
+                email: user?.email || profile.email || "",
                 phone: profile.phone || "",
                 address: profile.address || "",
                 division: profile.division || "",
@@ -61,27 +79,27 @@ export function PersonalInformationForm() {
                 email: user.email || "",
             }));
         }
-    }, [profile, user]);
+    }, [profile, user, divisionsLoading, profileLoading, userLoading]);
 
     const handleInputChange = (field: string, value: string) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
     };
 
-    // Load divisions on mount
-    useEffect(() => {
-        const loadDivisions = async () => {
-            const supabase = createClient();
-            const { data } = await supabase.from("divisions").select("id, name").order("name", { ascending: true });
-            setDivisions(data || []);
-        };
-        loadDivisions();
-    }, []);
+    // When profile/divisions are available, derive selectedDivisionId from the saved division name
+    useLayoutEffect(() => {
+        if (!formData.division || divisions.length === 0) return;
+        const target = formData.division.trim().toLowerCase();
+        const div = divisions.find(d => d.name.trim().toLowerCase() === target);
+        setSelectedDivisionId(div ? div.id : null);
+    }, [divisions, formData.division]);
 
     // Load districts when division changes
     useEffect(() => {
         const loadDistricts = async () => {
+            setDistrictsLoading(true);
             if (!selectedDivisionId) {
                 setDistricts([]);
+                setDistrictsLoading(false);
                 return;
             }
             const supabase = createClient();
@@ -91,6 +109,7 @@ export function PersonalInformationForm() {
                 .eq("division_id", selectedDivisionId)
                 .order("name", { ascending: true });
             setDistricts(data || []);
+            setDistrictsLoading(false);
         };
         loadDistricts();
     }, [selectedDivisionId]);
@@ -120,6 +139,18 @@ export function PersonalInformationForm() {
                 throw new Error(error.error || "Failed to save profile");
             }
 
+            // Optimistically update cached profile to prevent refetch/reset on tab change
+            setProfile({
+                ...(profile || ({} as any)),
+                full_name: formData.fullName || null,
+                phone: formData.phone || null,
+                address: formData.address || null,
+                division: formData.division || null,
+                district: formData.district || null,
+                postal_code: formData.postalCode || null,
+                bio: formData.bio || null,
+            } as any);
+
             toast.success("Profile updated successfully");
         } catch (error) {
             console.error("Error updating profile:", error);
@@ -128,6 +159,48 @@ export function PersonalInformationForm() {
             setIsSaving(false);
         }
     };
+
+    const isLoading = profileLoading || userLoading || divisionsLoading;
+
+    if (isLoading) {
+        return (
+            <motion.div variants={fadeInUp}>
+                <Card className="border-border/50">
+                    <CardHeader>
+                        <CardTitle>Personal Information</CardTitle>
+                        <CardDescription>
+                            Update your profile details. All fields are optional, but completing them is required for account verification.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex items-center justify-center py-6">
+                            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                        </div>
+                        <div className="space-y-6">
+                            <div className="space-y-2">
+                                <div className="h-4 w-24 bg-muted rounded animate-pulse" />
+                                <div className="h-10 w-full bg-muted rounded animate-pulse" />
+                            </div>
+                            <div className="space-y-2">
+                                <div className="h-4 w-32 bg-muted rounded animate-pulse" />
+                                <div className="h-10 w-full bg-muted rounded animate-pulse" />
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <div className="h-4 w-20 bg-muted rounded animate-pulse" />
+                                    <div className="h-10 w-full bg-muted rounded animate-pulse" />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="h-4 w-20 bg-muted rounded animate-pulse" />
+                                    <div className="h-10 w-full bg-muted rounded animate-pulse" />
+                                </div>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </motion.div>
+        );
+    }
 
     return (
         <motion.div variants={fadeInUp}>
@@ -160,7 +233,7 @@ export function PersonalInformationForm() {
                                     value={formData.fullName}
                                     onChange={(e) => handleInputChange("fullName", e.target.value)}
                                     className="pl-10"
-                                    disabled={loading}
+                                    disabled={isLoading}
                                 />
                             </div>
                             <p className="text-xs text-muted-foreground">
@@ -198,7 +271,7 @@ export function PersonalInformationForm() {
                                     value={formData.phone}
                                     onChange={(e) => handleInputChange("phone", e.target.value)}
                                     className="pl-10"
-                                    disabled={loading}
+                                    disabled={isLoading}
                                 />
                             </div>
                             <p className="text-xs text-muted-foreground">
@@ -217,7 +290,7 @@ export function PersonalInformationForm() {
                                     onChange={(e) => handleInputChange("address", e.target.value)}
                                     className="pl-10 min-h-20"
                                     rows={3}
-                                    disabled={loading}
+                                    disabled={isLoading}
                                 />
                             </div>
                         </div>
@@ -226,20 +299,26 @@ export function PersonalInformationForm() {
                             <div className="space-y-2">
                                 <Label htmlFor="division">Division</Label>
                                 <Select
+                                    key={`division-${formData.division || 'none'}`}
                                     value={formData.division}
                                     onValueChange={(value) => {
                                         handleInputChange("division", value);
-                                        const div = divisions.find(d => d.name === value);
+                                        const target = value.trim().toLowerCase();
+                                        const div = divisions.find(d => d.name.trim().toLowerCase() === target);
                                         setSelectedDivisionId(div ? div.id : null);
                                         // Reset district when division changes
                                         handleInputChange("district", "");
                                     }}
-                                    disabled={loading}
+                                    disabled={isLoading}
                                 >
                                     <SelectTrigger id="division" className="w-full">
                                         <SelectValue placeholder="Select division" />
                                     </SelectTrigger>
                                     <SelectContent>
+                                        {/* Ensure current division appears even if not in fetched list */}
+                                        {formData.division && !divisions.some(d => d.name === formData.division) && (
+                                            <SelectItem value={formData.division}>{formData.division}</SelectItem>
+                                        )}
                                         {divisions.map((d) => (
                                             <SelectItem key={d.id} value={d.name}>
                                                 {d.name}
@@ -251,22 +330,31 @@ export function PersonalInformationForm() {
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="district">District</Label>
-                                <Select
-                                    value={formData.district}
-                                    onValueChange={(value) => handleInputChange("district", value)}
-                                    disabled={loading || !formData.division}
-                                >
-                                    <SelectTrigger id="district" className="w-full">
-                                        <SelectValue placeholder="Select district (optional)" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {districts.map((dist) => (
-                                            <SelectItem key={dist.id} value={dist.name}>
-                                                {dist.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                {districtsLoading ? (
+                                    <div className="h-10 w-full bg-muted rounded animate-pulse" />
+                                ) : (
+                                    <Select
+                                        key={`district-${formData.district || 'none'}`}
+                                        value={formData.district}
+                                        onValueChange={(value) => handleInputChange("district", value)}
+                                        disabled={isLoading || !formData.division}
+                                    >
+                                        <SelectTrigger id="district" className="w-full">
+                                            <SelectValue placeholder="Select district (optional)" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {/* Ensure current district appears even if not in fetched list */}
+                                            {formData.district && !districts.some(d => d.name === formData.district) && (
+                                                <SelectItem value={formData.district}>{formData.district}</SelectItem>
+                                            )}
+                                            {districts.map((dist) => (
+                                                <SelectItem key={dist.id} value={dist.name}>
+                                                    {dist.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                )}
                                 <p className="text-xs text-muted-foreground">
                                     Required for verification
                                 </p>
@@ -280,7 +368,7 @@ export function PersonalInformationForm() {
                                 placeholder="Enter postal code"
                                 value={formData.postalCode}
                                 onChange={(e) => handleInputChange("postalCode", e.target.value)}
-                                disabled={loading}
+                                disabled={isLoading}
                             />
                         </div>
 
@@ -293,7 +381,7 @@ export function PersonalInformationForm() {
                                 onChange={(e) => handleInputChange("bio", e.target.value)}
                                 className="min-h-24"
                                 rows={4}
-                                disabled={loading}
+                                disabled={isLoading}
                             />
                             <p className="text-xs text-muted-foreground">
                                 A brief description about yourself (max 500 characters)
@@ -318,11 +406,11 @@ export function PersonalInformationForm() {
                                         });
                                     }
                                 }}
-                                disabled={isSaving || loading}
+                                disabled={isSaving || isLoading}
                             >
                                 Reset
                             </Button>
-                            <Button type="submit" disabled={isSaving || loading}>
+                            <Button type="submit" disabled={isSaving || isLoading}>
                                 {isSaving ? (
                                     <>
                                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />

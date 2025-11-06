@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import type { Profile } from "./types";
@@ -36,61 +37,36 @@ export function useUser() {
 }
 
 export function useProfile() {
-    const [profile, setProfile] = useState<Profile | null>(null);
-    const [loading, setLoading] = useState(true);
-    const { user } = useUser();
+    const { user, loading: userLoading } = useUser();
+    const queryClient = useQueryClient();
 
-    const refetch = async () => {
-        if (!user) {
-            setProfile(null);
-            setLoading(false);
-            return;
-        }
-
-        setLoading(true);
-        const supabase = createClient();
-        const { data, error } = await supabase
-            .from("profiles")
-            .select("*")
-            .eq("user_id", user.id)
-            .single();
-
-        if (error) {
-            console.error("Error fetching profile:", error);
-            setProfile(null);
-        } else {
-            setProfile(data);
-        }
-        setLoading(false);
-    };
-
-    useEffect(() => {
-        if (!user) {
-            setProfile(null);
-            setLoading(false);
-            return;
-        }
-
-        const fetchProfile = async () => {
+    const query = useQuery({
+        queryKey: ["profile", user?.id],
+        enabled: !!user && !userLoading,
+        queryFn: async () => {
             const supabase = createClient();
             const { data, error } = await supabase
                 .from("profiles")
                 .select("*")
-                .eq("user_id", user.id)
+                .eq("user_id", user!.id)
                 .single();
-
             if (error) {
+                // eslint-disable-next-line no-console
                 console.error("Error fetching profile:", error);
-                setProfile(null);
-            } else {
-                setProfile(data);
+                return null;
             }
-            setLoading(false);
-        };
+            return data as Profile;
+        },
+        staleTime: 10 * 60 * 1000, // 10 minutes
+        gcTime: 30 * 60 * 1000, // 30 minutes in cache
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
+    });
 
-        fetchProfile();
-    }, [user]);
+    const setProfile = (next: Profile | null) => {
+        queryClient.setQueryData(["profile", user?.id], next);
+    };
 
-    return { profile, loading, refetch };
+    return { profile: query.data ?? null, loading: userLoading || query.isLoading, refetch: query.refetch, setProfile };
 }
 

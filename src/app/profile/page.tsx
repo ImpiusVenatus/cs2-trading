@@ -64,7 +64,7 @@ export default function ProfilePage() {
                                         variant={activeTab === tab.id ? "default" : "ghost"}
                                         size="sm"
                                         onClick={() => setActiveTab(tab.id)}
-                                        className="flex items-center gap-2 px-4"
+                                        className="flex items-center gap-2 px-4 hover:text-white"
                                     >
                                         <Icon className="w-4 h-4" />
                                         <span>{tab.label}</span>

@@ -91,7 +91,7 @@ export function Header() {
                     <div className="flex items-center space-x-4">
                         {/* Notifications */}
                         {user && (
-                            <Button variant="ghost" size="sm" className="hidden sm:flex">
+                            <Button variant="ghost" size="sm" className="hidden sm:flex hover:text-white">
                                 <Bell className="w-4 h-4" />
                             </Button>
                         )}
@@ -108,7 +108,7 @@ export function Header() {
                                 {/* Desktop Avatar */}
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="hidden sm:flex items-center gap-2">
+                                        <Button variant="ghost" size="sm" className="hidden sm:flex items-center gap-2 hover:text-white">
                                             {profile?.profile_picture_url ? (
                                                 <div className="relative w-6 h-6">
                                                     {desktopImageLoading && (
@@ -152,7 +152,7 @@ export function Header() {
                                 {/* Mobile Avatar */}
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="md:hidden">
+                                        <Button variant="ghost" size="sm" className="md:hidden hover:text-white">
                                             {profile?.profile_picture_url ? (
                                                 <div className="relative w-6 h-6">
                                                     {mobileImageLoading && (
@@ -199,7 +199,7 @@ export function Header() {
                                         Sign In
                                     </Link>
                                 </Button>
-                                <Button variant="ghost" size="sm" className="md:hidden" asChild>
+                                <Button variant="ghost" size="sm" className="md:hidden hover:text-white" asChild>
                                     <Link href="/auth/signin">
                                         <User className="w-4 h-4" />
                                     </Link>

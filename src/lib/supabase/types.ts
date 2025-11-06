@@ -130,6 +130,176 @@ export interface Database {
                     updated_at?: string;
                 };
             };
+            listing_categories: {
+                Row: {
+                    id: string;
+                    name: string;
+                    slug: string;
+                    description: string | null;
+                    icon: string | null;
+                    display_order: number;
+                    is_active: boolean;
+                    created_at: string;
+                    updated_at: string;
+                };
+                Insert: {
+                    id?: string;
+                    name: string;
+                    slug: string;
+                    description?: string | null;
+                    icon?: string | null;
+                    display_order?: number;
+                    is_active?: boolean;
+                    created_at?: string;
+                    updated_at?: string;
+                };
+                Update: {
+                    id?: string;
+                    name?: string;
+                    slug?: string;
+                    description?: string | null;
+                    icon?: string | null;
+                    display_order?: number;
+                    is_active?: boolean;
+                    created_at?: string;
+                    updated_at?: string;
+                };
+            };
+            listing_subcategories: {
+                Row: {
+                    id: string;
+                    category_id: string;
+                    name: string;
+                    slug: string;
+                    display_order: number;
+                    is_active: boolean;
+                    created_at: string;
+                    updated_at: string;
+                };
+                Insert: {
+                    id?: string;
+                    category_id: string;
+                    name: string;
+                    slug: string;
+                    display_order?: number;
+                    is_active?: boolean;
+                    created_at?: string;
+                    updated_at?: string;
+                };
+                Update: {
+                    id?: string;
+                    category_id?: string;
+                    name?: string;
+                    slug?: string;
+                    display_order?: number;
+                    is_active?: boolean;
+                    created_at?: string;
+                    updated_at?: string;
+                };
+            };
+            listing_weapon_types: {
+                Row: {
+                    id: string;
+                    subcategory_id: string;
+                    name: string;
+                    slug: string;
+                    display_order: number;
+                    is_active: boolean;
+                    created_at: string;
+                    updated_at: string;
+                };
+                Insert: {
+                    id?: string;
+                    subcategory_id: string;
+                    name: string;
+                    slug: string;
+                    display_order?: number;
+                    is_active?: boolean;
+                    created_at?: string;
+                    updated_at?: string;
+                };
+                Update: {
+                    id?: string;
+                    subcategory_id?: string;
+                    name?: string;
+                    slug?: string;
+                    display_order?: number;
+                    is_active?: boolean;
+                    created_at?: string;
+                    updated_at?: string;
+                };
+            };
+            listings: {
+                Row: {
+                    id: string;
+                    seller_id: string;
+                    category_id: string;
+                    subcategory_id: string | null;
+                    weapon_type_id: string | null;
+                    title: string;
+                    description: string | null;
+                    price: number;
+                    currency: "BDT" | "USD" | "EUR";
+                    condition: "Factory New" | "Minimal Wear" | "Field-Tested" | "Well-Worn" | "Battle-Scarred" | null;
+                    float_value: string | null;
+                    pattern_index: string | null;
+                    is_stattrak: boolean;
+                    is_souvenir: boolean;
+                    steam_trade_link: string | null;
+                    trade_link: string | null;
+                    image_urls: string[] | null;
+                    status: "active" | "sold" | "inactive" | "pending";
+                    created_at: string;
+                    updated_at: string;
+                    sold_at: string | null;
+                };
+                Insert: {
+                    id?: string;
+                    seller_id: string;
+                    category_id: string;
+                    subcategory_id?: string | null;
+                    weapon_type_id?: string | null;
+                    title: string;
+                    description?: string | null;
+                    price: number;
+                    currency?: "BDT" | "USD" | "EUR";
+                    condition?: "Factory New" | "Minimal Wear" | "Field-Tested" | "Well-Worn" | "Battle-Scarred" | null;
+                    float_value?: string | null;
+                    pattern_index?: string | null;
+                    is_stattrak?: boolean;
+                    is_souvenir?: boolean;
+                    steam_trade_link?: string | null;
+                    trade_link?: string | null;
+                    image_urls?: string[] | null;
+                    status?: "active" | "sold" | "inactive" | "pending";
+                    created_at?: string;
+                    updated_at?: string;
+                    sold_at?: string | null;
+                };
+                Update: {
+                    id?: string;
+                    seller_id?: string;
+                    category_id?: string;
+                    subcategory_id?: string | null;
+                    weapon_type_id?: string | null;
+                    title?: string;
+                    description?: string | null;
+                    price?: number;
+                    currency?: "BDT" | "USD" | "EUR";
+                    condition?: "Factory New" | "Minimal Wear" | "Field-Tested" | "Well-Worn" | "Battle-Scarred" | null;
+                    float_value?: string | null;
+                    pattern_index?: string | null;
+                    is_stattrak?: boolean;
+                    is_souvenir?: boolean;
+                    steam_trade_link?: string | null;
+                    trade_link?: string | null;
+                    image_urls?: string[] | null;
+                    status?: "active" | "sold" | "inactive" | "pending";
+                    created_at?: string;
+                    updated_at?: string;
+                    sold_at?: string | null;
+                };
+            };
         };
     };
 }
@@ -141,4 +311,11 @@ export type ProfileUpdate = Database["public"]["Tables"]["profiles"]["Update"];
 export type File = Database["public"]["Tables"]["files"]["Row"];
 export type FileInsert = Database["public"]["Tables"]["files"]["Insert"];
 export type FileUpdate = Database["public"]["Tables"]["files"]["Update"];
+
+export type ListingCategory = Database["public"]["Tables"]["listing_categories"]["Row"];
+export type ListingSubcategory = Database["public"]["Tables"]["listing_subcategories"]["Row"];
+export type ListingWeaponType = Database["public"]["Tables"]["listing_weapon_types"]["Row"];
+export type Listing = Database["public"]["Tables"]["listings"]["Row"];
+export type ListingInsert = Database["public"]["Tables"]["listings"]["Insert"];
+export type ListingUpdate = Database["public"]["Tables"]["listings"]["Update"];
 

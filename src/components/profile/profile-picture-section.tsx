@@ -139,6 +139,7 @@ export function ProfilePictureSection() {
                                         className="w-24 h-24 rounded-full object-cover border-2 border-border"
                                         onLoad={() => setImageLoading(false)}
                                         onError={() => setImageLoading(false)}
+                                        unoptimized
                                     />
                                 </div>
                             ) : (

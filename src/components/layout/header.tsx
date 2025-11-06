@@ -59,9 +59,14 @@ export function Header() {
                     <div className="flex items-center space-x-8">
                         {/* Logo */}
                         <Link href="/" className="flex items-center space-x-2">
-                            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                                <span className="text-white font-bold text-lg">C</span>
-                            </div>
+                            <Image
+                                src="/logo.svg"
+                                alt="CS2Trade BD"
+                                width={32}
+                                height={32}
+                                className="w-8 h-8"
+                                priority
+                            />
                             <span className="font-bold text-xl hidden sm:block">CS2Trade BD</span>
                         </Link>
 

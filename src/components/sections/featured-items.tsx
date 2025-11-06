@@ -1,82 +1,52 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { ItemCard } from "@/components/ui/item-card";
 import { Button } from "@/components/ui/button";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
-
-const mockItems = [
-    {
-        id: 1,
-        name: "AK-47 | Hydroponic",
-        condition: "Field-Tested",
-        price: 10600.00,
-        priceChange: -19.4,
-        floatValue: "0.1234567890",
-        patternIndex: "#235",
-        isStatTrak: true,
-        status: "online" as const,
-    },
-    {
-        id: 2,
-        name: "Sport Gloves | Superconductor",
-        condition: "Well-Worn",
-        price: 10033.56,
-        priceChange: -15.6,
-        floatValue: "0.2345678901",
-        patternIndex: "#123",
-        status: "offline" as const,
-    },
-    {
-        id: 3,
-        name: "Moto Gloves | Spearmint",
-        condition: "Factory New",
-        price: 7302.22,
-        priceChange: -17.2,
-        floatValue: "0.0123456789",
-        patternIndex: "#456",
-        isStatTrak: true,
-        status: "online" as const,
-    },
-    {
-        id: 4,
-        name: "Karambit | Gamma Doppler",
-        condition: "Factory New",
-        price: 6874.87,
-        priceChange: -18.0,
-        floatValue: "0.0012345678",
-        patternIndex: "#789",
-        status: "offline" as const,
-    },
-    {
-        id: 5,
-        name: "Butterfly Knife | Doppler",
-        condition: "Minimal Wear",
-        price: 5800.00,
-        priceChange: -12.5,
-        floatValue: "0.0567890123",
-        patternIndex: "#321",
-        isSouvenir: true,
-        status: "online" as const,
-    },
-    {
-        id: 6,
-        name: "AWP | Dragon Lore",
-        condition: "Field-Tested",
-        price: 15200.00,
-        priceChange: -8.3,
-        floatValue: "0.1678901234",
-        patternIndex: "#654",
-        isStatTrak: true,
-        status: "offline" as const,
-    },
-];
+import { CS2DataService, type CS2Item } from "@/lib/data/cs2-data";
 
 const tabs = ["Top Deals", "Newest Listings", "Premium Items"];
 
 export function FeaturedItems() {
     const [activeTab, setActiveTab] = useState("Top Deals");
+    const [items, setItems] = useState<CS2Item[]>([]);
+
+    useEffect(() => {
+        // Load featured items based on active tab
+        let result;
+        switch (activeTab) {
+            case "Top Deals":
+                // Get items with price drops (negative priceChange)
+                result = CS2DataService.getItems({ limit: 8 });
+                // Filter and sort by best deals (negative price change)
+                const deals = result.items
+                    .filter(item => item.priceChange && item.priceChange < 0)
+                    .sort((a, b) => (a.priceChange || 0) - (b.priceChange || 0))
+                    .slice(0, 8);
+                setItems(deals.length > 0 ? deals : result.items.slice(0, 8));
+                break;
+            case "Newest Listings":
+                // Get newest items
+                result = CS2DataService.getItems({ limit: 8 });
+                setItems(result.items.slice(0, 8));
+                break;
+            case "Premium Items":
+                // Get high-value items
+                result = CS2DataService.getItems({ limit: 50 });
+                const premium = result.items
+                    .filter(item => item.price > 1000)
+                    .sort((a, b) => b.price - a.price)
+                    .slice(0, 8);
+                setItems(premium.length > 0 ? premium : result.items.slice(0, 8));
+                break;
+            default:
+                result = CS2DataService.getItems({ limit: 8 });
+                setItems(result.items.slice(0, 8));
+        }
+    }, [activeTab]);
 
     return (
         <section className="py-20 bg-muted/20">
@@ -121,7 +91,7 @@ export function FeaturedItems() {
                         variants={staggerContainer}
                         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6"
                     >
-                        {mockItems.map((item, index) => (
+                        {items.map((item, index) => (
                             <motion.div
                                 key={item.id}
                                 variants={fadeInUp}
@@ -134,9 +104,11 @@ export function FeaturedItems() {
                                     priceChange={item.priceChange}
                                     floatValue={item.floatValue}
                                     patternIndex={item.patternIndex}
+                                    imageUrl={item.imageUrl}
                                     isStatTrak={item.isStatTrak}
                                     isSouvenir={item.isSouvenir}
                                     status={item.status}
+                                    rarity={item.rarity}
                                 />
                             </motion.div>
                         ))}
@@ -144,8 +116,8 @@ export function FeaturedItems() {
 
                     {/* View All Button */}
                     <motion.div variants={fadeInUp} className="text-center">
-                        <Button size="lg" variant="outline">
-                            View All Items
+                        <Button size="lg" variant="outline" asChild>
+                            <Link href="/market">View All Items</Link>
                         </Button>
                     </motion.div>
                 </motion.div>

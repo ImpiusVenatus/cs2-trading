@@ -1,18 +1,48 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import { fadeInUp, staggerContainer, slideInFromLeft, slideInFromRight } from "@/lib/animations";
 
+const rifleImages = [
+    { src: "/assets/rifle.png", name: "AK-47 | Spicy Edition", tag: "🔥 Extra Hot" },
+    { src: "/assets/rifle-2.png", name: "AK-47 | Chicken Edition", tag: "🐔 Cluck Cluck" },
+    { src: "/assets/rifle-3.png", name: "AK-47 | Rainbow Mode", tag: "🌈 Unicorn Approved" },
+];
+
 export function HeroSection() {
+    const [currentIndex, setCurrentIndex] = useState(0);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCurrentIndex((prev) => (prev + 1) % rifleImages.length);
+        }, 4000); // Change every 4 seconds
+
+        return () => clearInterval(interval);
+    }, []);
+
     return (
-        <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
-            {/* Background Pattern */}
-            <div className="absolute inset-0 opacity-5">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.1),transparent_50%)]" />
+        <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+            {/* Background Image */}
+            <div className="absolute inset-0">
+                <Image
+                    src="/assets/hero-image.jpg"
+                    alt="CS2 Trading Community"
+                    fill
+                    className="object-cover"
+                    priority
+                    quality={90}
+                />
+                {/* Dark Overlay for Text Readability */}
+                <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/85 to-background/70" />
+                {/* Additional Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-transparent to-background/80" />
             </div>
 
-            <div className="container mx-auto px-4 py-20">
+            {/* Content */}
+            <div className="container mx-auto px-4 py-20 relative z-10">
                 <motion.div
                     className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center"
                     variants={staggerContainer}
@@ -26,19 +56,20 @@ export function HeroSection() {
                                 className="text-5xl lg:text-7xl font-bold leading-tight"
                                 variants={fadeInUp}
                             >
-                                Bangladesh&apos;s Premier{" "}
-                                <span className="bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
-                                    CS2 Marketplace
+                                Your One-Stop{" "}
+                                <span className="bg-gradient-to-r from-[#EF626C] to-[#84DCCF] bg-clip-text text-transparent">
+                                    Trading Hub
                                 </span>
                             </motion.h1>
                             <motion.p
-                                className="text-xl text-muted-foreground max-w-2xl"
+                                className="text-xl text-foreground/90 max-w-2xl leading-relaxed"
                                 variants={fadeInUp}
                             >
-                                The trusted platform for buying and selling CS2 skins in Bangladesh. 
-                                List your items, connect with local buyers, and trade securely with 
-                                the lowest fees in the region. Join thousands of traders building the 
-                                CS2 community in Bangladesh.
+                                Trade CS2 skins, sell premium subscriptions (Spotify, Netflix), and 
+                                exchange Steam referral codes all in one secure marketplace. Connect 
+                                with verified traders, list your items, and enjoy the lowest fees in 
+                                Bangladesh. Join thousands building the gaming and digital services 
+                                community.
                             </motion.p>
                         </div>
 
@@ -61,109 +92,169 @@ export function HeroSection() {
                             variants={fadeInUp}
                         >
                             <div className="text-center">
-                                <div className="text-2xl font-bold text-blue-500">10K+</div>
-                                <div className="text-sm text-muted-foreground">Active Listings</div>
+                                <div className="text-2xl font-bold text-[#EF626C]">10K+</div>
+                                <div className="text-sm text-foreground/70">Active Listings</div>
                             </div>
                             <div className="text-center">
-                                <div className="text-2xl font-bold text-green-500">5K+</div>
-                                <div className="text-sm text-muted-foreground">Verified Sellers</div>
+                                <div className="text-2xl font-bold text-[#84DCCF]">5K+</div>
+                                <div className="text-sm text-foreground/70">Verified Sellers</div>
                             </div>
                             <div className="text-center">
-                                <div className="text-2xl font-bold text-purple-500">৳50M+</div>
-                                <div className="text-sm text-muted-foreground">Traded Value</div>
+                                <div className="text-2xl font-bold text-[#EF626C]">৳50M+</div>
+                                <div className="text-sm text-foreground/70">Traded Value</div>
                             </div>
                         </motion.div>
                     </motion.div>
 
-                    {/* Right Content - 3D Item Preview */}
+                    {/* Right Content - Trading Carousel */}
                     <motion.div
                         variants={slideInFromRight}
-                        className="relative flex justify-center"
+                        className="relative flex justify-center items-center"
                     >
-                        {/* Mock 3D Item Card */}
-                        <div className="relative w-full max-w-md">
-                            {/* 3D Container */}
-                            <motion.div
-                                className="relative bg-gradient-to-br from-card to-muted border border-border rounded-2xl p-8 shadow-2xl"
-                                whileHover={{
-                                    rotateY: 5,
-                                    rotateX: 5,
-                                    scale: 1.02
-                                }}
-                                style={{
-                                    transformStyle: "preserve-3d",
-                                    perspective: "1000px"
-                                }}
-                            >
-                                {/* Item Image Placeholder */}
-                                <div className="aspect-square bg-gradient-to-br from-blue-500/20 to-purple-600/20 rounded-xl mb-6 flex items-center justify-center relative overflow-hidden">
-                                    <div className="text-6xl">🔫</div>
-                                    {/* Glow Effect */}
-                                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/30 to-purple-600/30 rounded-xl" />
+                        <div className="relative w-full max-w-lg">
+                            {/* Goofy Card Container */}
+                            <div className="relative bg-card/90 backdrop-blur-sm border-2 border-border rounded-2xl p-8 shadow-2xl">
+                                {/* Fun Badge */}
+                                <motion.div
+                                    animate={{
+                                        rotate: [0, -5, 5, -5, 0],
+                                        scale: [1, 1.1, 1],
+                                    }}
+                                    transition={{
+                                        duration: 2,
+                                        repeat: Infinity,
+                                        ease: "easeInOut",
+                                    }}
+                                    className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-[#EF626C] to-[#84DCCF] text-white px-4 py-1 rounded-full text-sm font-semibold z-10"
+                                >
+                                    {rifleImages[currentIndex].tag}
+                                </motion.div>
+
+                                {/* Carousel */}
+                                <div className="relative h-96 overflow-hidden rounded-xl bg-gradient-to-br from-muted/30 to-muted/10">
+                                    <AnimatePresence mode="wait">
+                                        <motion.div
+                                            key={currentIndex}
+                                            initial={{ opacity: 0, rotate: -10, scale: 0.8 }}
+                                            animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                                            exit={{ opacity: 0, rotate: 10, scale: 0.8 }}
+                                            transition={{ duration: 0.6, type: "spring", stiffness: 100 }}
+                                            className="absolute inset-0 flex flex-col items-center justify-center"
+                                        >
+                                            <motion.div
+                                                animate={{
+                                                    y: [0, -10, 0],
+                                                    rotate: [0, 2, -2, 0],
+                                                }}
+                                                transition={{
+                                                    duration: 3,
+                                                    repeat: Infinity,
+                                                    ease: "easeInOut",
+                                                }}
+                                                className="relative w-full h-full flex items-center justify-center"
+                                            >
+                                                <Image
+                                                    src={rifleImages[currentIndex].src}
+                                                    alt={rifleImages[currentIndex].name}
+                                                    width={400}
+                                                    height={400}
+                                                    className="object-contain w-full h-full drop-shadow-2xl"
+                                                    priority={currentIndex === 0}
+                                                />
+                                            </motion.div>
+                                        </motion.div>
+                                    </AnimatePresence>
                                 </div>
 
-                                {/* Item Details */}
-                                <div className="space-y-4">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <h3 className="font-bold text-lg">AK-47 | Case Hardened</h3>
-                                            <p className="text-sm text-muted-foreground">StatTrak™ Factory New</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-2xl font-bold text-green-500">$675.00</p>
-                                            <p className="text-sm text-red-500">-4.2%</p>
-                                        </div>
+                                {/* Goofy Item Info */}
+                                <div className="mt-6 space-y-4">
+                                    <div className="text-center">
+                                        <h3 className="font-bold text-xl">{rifleImages[currentIndex].name}</h3>
                                     </div>
 
-                                    {/* Float Value */}
-                                    <div className="bg-muted/50 rounded-lg p-3">
-                                        <div className="flex justify-between text-sm">
-                                            <span className="text-muted-foreground">Float Value:</span>
-                                            <span className="font-mono">0.0001234567</span>
-                                        </div>
-                                        <div className="w-full bg-muted rounded-full h-2 mt-2">
-                                            <div className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full" style={{ width: '12%' }} />
-                                        </div>
-                                    </div>
-
-                                    {/* Action Buttons */}
-                                    <div className="flex gap-3">
-                                        <Button className="flex-1">Buy Now</Button>
-                                        <Button variant="outline" className="flex-1">Make Offer</Button>
+                                    {/* Carousel Indicators */}
+                                    <div className="flex justify-center gap-2">
+                                        {rifleImages.map((_, index) => (
+                                            <button
+                                                key={index}
+                                                onClick={() => setCurrentIndex(index)}
+                                                className={`h-2 rounded-full transition-all ${
+                                                    index === currentIndex
+                                                        ? "w-8 bg-[#EF626C]"
+                                                        : "w-2 bg-muted-foreground/30"
+                                                }`}
+                                                aria-label={`Go to slide ${index + 1}`}
+                                            />
+                                        ))}
                                     </div>
                                 </div>
 
-                                {/* Decorative Elements */}
-                                <div className="absolute -top-4 -right-4 w-8 h-8 bg-blue-500/20 rounded-full" />
-                                <div className="absolute -bottom-4 -left-4 w-6 h-6 bg-purple-500/20 rounded-full" />
-                            </motion.div>
+                                {/* Fun Animation Elements */}
+                                <motion.div
+                                    animate={{
+                                        y: [0, -15, 0],
+                                        rotate: [0, 10, -10, 0],
+                                    }}
+                                    transition={{
+                                        duration: 3,
+                                        repeat: Infinity,
+                                        ease: "easeInOut",
+                                    }}
+                                    className="absolute -right-4 top-1/2 -translate-y-1/2 hidden lg:block"
+                                >
+                                    <div className="bg-[#84DCCF]/20 backdrop-blur-sm border border-[#84DCCF]/30 rounded-lg p-3">
+                                        <div className="text-xs font-semibold text-[#84DCCF]">🎯 Pew Pew</div>
+                                    </div>
+                                </motion.div>
+                                <motion.div
+                                    animate={{
+                                        y: [0, 15, 0],
+                                        rotate: [0, -10, 10, 0],
+                                    }}
+                                    transition={{
+                                        duration: 2.5,
+                                        repeat: Infinity,
+                                        ease: "easeInOut",
+                                        delay: 0.5,
+                                    }}
+                                    className="absolute -left-4 bottom-1/4 hidden lg:block"
+                                >
+                                    <div className="bg-[#EF626C]/20 backdrop-blur-sm border border-[#EF626C]/30 rounded-lg p-3">
+                                        <div className="text-xs font-semibold text-[#EF626C]">💥 Boom</div>
+                                    </div>
+                                </motion.div>
+                            </div>
                         </div>
                     </motion.div>
                 </motion.div>
             </div>
 
-            {/* Floating Elements */}
+            {/* Decorative Elements */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                {/* Grid Pattern */}
+                <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[size:50px_50px]" />
+                
+                {/* Floating Accent Dots */}
                 <motion.div
-                    className="absolute top-1/4 left-1/4 w-2 h-2 bg-blue-500 rounded-full"
+                    className="absolute top-1/4 right-1/4 w-3 h-3 bg-[#EF626C]/30 rounded-full blur-sm"
                     animate={{
-                        y: [0, -20, 0],
-                        opacity: [0.5, 1, 0.5],
+                        y: [0, -30, 0],
+                        opacity: [0.3, 0.6, 0.3],
                     }}
                     transition={{
-                        duration: 3,
+                        duration: 4,
                         repeat: Infinity,
                         ease: "easeInOut",
                     }}
                 />
                 <motion.div
-                    className="absolute top-3/4 right-1/4 w-1 h-1 bg-purple-500 rounded-full"
+                    className="absolute bottom-1/4 right-1/3 w-2 h-2 bg-[#84DCCF]/30 rounded-full blur-sm"
                     animate={{
-                        y: [0, 20, 0],
-                        opacity: [0.3, 0.8, 0.3],
+                        y: [0, 25, 0],
+                        opacity: [0.3, 0.7, 0.3],
                     }}
                     transition={{
-                        duration: 4,
+                        duration: 5,
                         repeat: Infinity,
                         ease: "easeInOut",
                         delay: 1,

@@ -56,7 +56,9 @@ function SignInForm() {
                 <motion.div variants={fadeInUp}>
                     <Card className="border-border/50 shadow-lg">
                         <CardHeader className="space-y-1 text-center">
-                            <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
+                            <CardTitle className="text-2xl font-bold">
+                                <span className="bg-gradient-to-r from-[#EF626C] to-[#84DCCF] bg-clip-text text-transparent">Welcome Back</span>
+                            </CardTitle>
                             <CardDescription>
                                 Sign in to your account to continue trading
                             </CardDescription>
@@ -65,12 +67,12 @@ function SignInForm() {
                             <Button
                                 onClick={handleGoogleSignIn}
                                 disabled={isLoading}
-                                className="w-full h-11 bg-white text-gray-900 border border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-white dark:border-gray-700 dark:hover:bg-gray-700 transition-colors"
-                                variant="outline"
+                                className="w-full h-11 bg-[#EF626C] text-white hover:bg-[#e35760] border border-transparent transition-colors"
+                                variant="default"
                             >
                                 {isLoading ? (
                                     <div className="flex items-center gap-2">
-                                        <div className="w-4 h-4 border-2 border-gray-900 dark:border-white border-t-transparent rounded-full animate-spin" />
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                                         <span>Signing in...</span>
                                     </div>
                                 ) : (
@@ -109,7 +111,7 @@ function SignInForm() {
                                 </div>
                                 <div className="relative flex justify-center text-xs uppercase">
                                     <span className="bg-card px-2 text-muted-foreground">
-                                        New to CS2Trade BD?
+                                        New to CS2BD?
                                     </span>
                                 </div>
                             </div>

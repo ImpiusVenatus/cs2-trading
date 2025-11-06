@@ -64,7 +64,9 @@ function SignUpForm() {
                 <motion.div variants={fadeInUp}>
                     <Card className="border-border/50 shadow-lg">
                         <CardHeader className="space-y-1 text-center">
-                            <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
+                            <CardTitle className="text-2xl font-bold">
+                                <span className="bg-gradient-to-r from-[#EF626C] to-[#84DCCF] bg-clip-text text-transparent">Create Account</span>
+                            </CardTitle>
                             <CardDescription>
                                 Sign up to start trading CS2 items in Bangladesh
                             </CardDescription>

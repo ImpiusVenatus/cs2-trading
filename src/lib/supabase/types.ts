@@ -300,6 +300,61 @@ export interface Database {
                     sold_at?: string | null;
                 };
             };
+            chat_rooms: {
+                Row: {
+                    id: string;
+                    participant1_id: string;
+                    participant2_id: string;
+                    last_message_at: string | null;
+                    created_at: string;
+                    updated_at: string;
+                };
+                Insert: {
+                    id?: string;
+                    participant1_id: string;
+                    participant2_id: string;
+                    last_message_at?: string | null;
+                    created_at?: string;
+                    updated_at?: string;
+                };
+                Update: {
+                    id?: string;
+                    participant1_id?: string;
+                    participant2_id?: string;
+                    last_message_at?: string | null;
+                    created_at?: string;
+                    updated_at?: string;
+                };
+            };
+            messages: {
+                Row: {
+                    id: string;
+                    chat_room_id: string;
+                    sender_id: string;
+                    content: string;
+                    read_at: string | null;
+                    created_at: string;
+                    updated_at: string;
+                };
+                Insert: {
+                    id?: string;
+                    chat_room_id: string;
+                    sender_id: string;
+                    content: string;
+                    read_at?: string | null;
+                    created_at?: string;
+                    updated_at?: string;
+                };
+                Update: {
+                    id?: string;
+                    chat_room_id?: string;
+                    sender_id?: string;
+                    content?: string;
+                    read_at?: string | null;
+                    created_at?: string;
+                    updated_at?: string;
+                };
+            };
         };
     };
 }
@@ -318,4 +373,12 @@ export type ListingWeaponType = Database["public"]["Tables"]["listing_weapon_typ
 export type Listing = Database["public"]["Tables"]["listings"]["Row"];
 export type ListingInsert = Database["public"]["Tables"]["listings"]["Insert"];
 export type ListingUpdate = Database["public"]["Tables"]["listings"]["Update"];
+
+export type ChatRoom = Database["public"]["Tables"]["chat_rooms"]["Row"];
+export type ChatRoomInsert = Database["public"]["Tables"]["chat_rooms"]["Insert"];
+export type ChatRoomUpdate = Database["public"]["Tables"]["chat_rooms"]["Update"];
+
+export type Message = Database["public"]["Tables"]["messages"]["Row"];
+export type MessageInsert = Database["public"]["Tables"]["messages"]["Insert"];
+export type MessageUpdate = Database["public"]["Tables"]["messages"]["Update"];
 

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Bell, User, LogOut } from "lucide-react";
+import { Bell, User, LogOut, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
@@ -84,6 +84,14 @@ export function Header() {
                             >
                                 Database
                             </Link>
+                            {user && (
+                                <Link
+                                    href="/chat"
+                                    className="text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                    Messages
+                                </Link>
+                            )}
                         </nav>
                     </div>
 
@@ -143,6 +151,12 @@ export function Header() {
                                                 Profile
                                             </Link>
                                         </DropdownMenuItem>
+                                        <DropdownMenuItem asChild>
+                                            <Link href="/chat">
+                                                <MessageSquare className="w-4 h-4 mr-2" />
+                                                Messages
+                                            </Link>
+                                        </DropdownMenuItem>
                                         <DropdownMenuItem onClick={handleSignOut}>
                                             <LogOut className="w-4 h-4 mr-2" />
                                             Sign Out
@@ -182,6 +196,12 @@ export function Header() {
                                             <Link href="/profile">
                                                 <User className="w-4 h-4 mr-2" />
                                                 Profile
+                                            </Link>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem asChild>
+                                            <Link href="/chat">
+                                                <MessageSquare className="w-4 h-4 mr-2" />
+                                                Messages
                                             </Link>
                                         </DropdownMenuItem>
                                         <DropdownMenuItem onClick={handleSignOut}>

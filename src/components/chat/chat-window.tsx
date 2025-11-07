@@ -25,6 +25,7 @@ interface ChatWindowProps {
 export function ChatWindow({ chatRoomId, userId }: ChatWindowProps) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [otherUser, setOtherUser] = useState<Profile | null>(null);
+    const [listing, setListing] = useState<{ id: string; title: string } | null>(null);
     const [loading, setLoading] = useState(true);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const lastMessageTimeRef = useRef<string>("1970-01-01");
@@ -57,6 +58,18 @@ export function ChatWindow({ chatRoomId, userId }: ChatWindowProps) {
 
                 if (profile) {
                     setOtherUser(profile);
+                }
+
+                // Get listing info if this is a listing-specific chat
+                if (room.listing_id) {
+                    const { data: listingData } = await supabase
+                        .from("listings")
+                        .select("id, title")
+                        .eq("id", room.listing_id)
+                        .single();
+                    if (listingData) {
+                        setListing(listingData);
+                    }
                 }
 
                 // Fetch messages
@@ -253,11 +266,17 @@ export function ChatWindow({ chatRoomId, userId }: ChatWindowProps) {
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
                     {initial}
                 </div>
-                <div>
-                    <h2 className="font-semibold">{displayName}</h2>
-                    <p className="text-xs text-muted-foreground">
-                        {otherUser?.account_type || "User"}
-                    </p>
+                <div className="flex-1 min-w-0">
+                    <h2 className="font-semibold truncate">{displayName}</h2>
+                    {listing ? (
+                        <p className="text-xs text-muted-foreground truncate">
+                            {listing.title}
+                        </p>
+                    ) : (
+                        <p className="text-xs text-muted-foreground">
+                            {otherUser?.account_type || "User"}
+                        </p>
+                    )}
                 </div>
             </div>
 

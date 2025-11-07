@@ -1,110 +1,168 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Search, SlidersHorizontal, Loader2, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ItemCard } from "@/components/ui/item-card";
+import { ListingCard } from "@/components/market/listing-card";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
-import { CS2DataService, type CS2Item } from "@/lib/data/cs2-data";
-
-const categories = [
-    "Rifles", "Pistols", "SMGs", "Heavy", "Knives", "Gloves",
-    "Agents", "Containers", "Stickers", "Keychains", "Patches",
-    "Collectibles", "Music Kits"
-];
-
-const filters = [
-    "All Items", "Sticker Combos", "Unique Items", "Best Deals"
-];
-
-// Filter options
-const wearOptions = ["FN", "MW", "FT", "WW", "BS"];
-const specialOptions = ["StatTrak™", "Souvenir", "Highlight", "Normal"];
+import type { Listing, ListingCategory, ListingSubcategory } from "@/lib/supabase/types";
+import { toast } from "sonner";
 
 export default function MarketPage() {
-    const [selectedCategory, setSelectedCategory] = useState("");
-    const [selectedFilter, setSelectedFilter] = useState("All Items");
+    const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+    const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [showFilters, setShowFilters] = useState(false);
     const [minPrice, setMinPrice] = useState<number | undefined>();
     const [maxPrice, setMaxPrice] = useState<number | undefined>();
-    const [selectedWear, setSelectedWear] = useState<string[]>([]);
-    const [selectedSpecial, setSelectedSpecial] = useState<string[]>([]);
 
-    // Simple state management
-    const [items, setItems] = useState<CS2Item[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
+    // Categories and subcategories
+    const [categories, setCategories] = useState<ListingCategory[]>([]);
+    const [subcategories, setSubcategories] = useState<ListingSubcategory[]>([]);
+    const [loadingCategories, setLoadingCategories] = useState(true);
+
+    // Listings state
+    const [allListings, setAllListings] = useState<(Listing & { imageUrl?: string })[]>([]);
+    const [filteredListings, setFilteredListings] = useState<(Listing & { imageUrl?: string })[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [totalCount, setTotalCount] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
-    const [hasMore, setHasMore] = useState(false);
     const itemsPerPage = 20;
 
-    // Load items function
-    const loadItems = useCallback((page: number = currentPage, reset: boolean = false) => {
-        setIsLoading(true);
-        setError(null);
-
-        try {
-            const offset = (page - 1) * itemsPerPage;
-            const result = CS2DataService.getItems({
-                search: searchQuery,
-                category: selectedCategory || undefined,
-                minPrice,
-                maxPrice,
-                wear: selectedWear.length > 0 ? selectedWear : undefined,
-                special: selectedSpecial.length > 0 ? selectedSpecial : undefined,
-                limit: itemsPerPage,
-                offset
-            });
-
-            if (reset || page === 1) {
-                setItems(result.items);
-            } else {
-                setItems(prev => [...prev, ...result.items]);
+    // Fetch categories on mount
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const response = await fetch("/api/listings/categories");
+                if (!response.ok) throw new Error("Failed to fetch categories");
+                const { categories: data } = await response.json();
+                setCategories(data || []);
+            } catch (error) {
+                console.error("Error fetching categories:", error);
+                toast.error("Failed to load categories");
+            } finally {
+                setLoadingCategories(false);
             }
+        };
+        fetchCategories();
+    }, []);
 
-            setTotalCount(result.totalCount);
-            setHasMore(result.hasMore);
-            setCurrentPage(page);
+    // Fetch subcategories when category changes
+    useEffect(() => {
+        const fetchSubcategories = async () => {
+            if (!selectedCategoryId) {
+                setSubcategories([]);
+                return;
+            }
+            try {
+                const response = await fetch(`/api/listings/subcategories?category_id=${selectedCategoryId}`);
+                if (!response.ok) throw new Error("Failed to fetch subcategories");
+                const { subcategories: data } = await response.json();
+                setSubcategories(data || []);
+            } catch (error) {
+                console.error("Error fetching subcategories:", error);
+                toast.error("Failed to load subcategories");
+            }
+        };
+        fetchSubcategories();
+    }, [selectedCategoryId]);
 
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to load items');
-        } finally {
-            setIsLoading(false);
+    // Fetch all listings once on mount
+    useEffect(() => {
+        const fetchAllListings = async () => {
+            setIsLoading(true);
+            setError(null);
+
+            try {
+                // Fetch all active listings (we'll fetch in batches if needed, but for now let's get a reasonable amount)
+                const response = await fetch(`/api/listings?status=active&limit=1000&offset=0`);
+                if (!response.ok) throw new Error("Failed to fetch listings");
+
+                const data = await response.json();
+                const fetchedListings = data.listings || [];
+
+                // Fetch image URLs for listings
+                const listingsWithImages = await Promise.all(
+                    fetchedListings.map(async (listing: Listing) => {
+                        let imageUrl: string | undefined;
+                        if (listing.image_urls && listing.image_urls.length > 0) {
+                            try {
+                                const imageResponse = await fetch("/api/listings/image-url", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ imageUrl: listing.image_urls[0] }),
+                                });
+                                if (imageResponse.ok) {
+                                    const imageData = await imageResponse.json();
+                                    imageUrl = imageData.url;
+                                }
+                            } catch (error) {
+                                console.error(`Error fetching image for listing ${listing.id}:`, error);
+                            }
+                        }
+                        return { ...listing, imageUrl };
+                    })
+                );
+
+                setAllListings(listingsWithImages);
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Failed to load listings');
+                toast.error("Failed to load listings");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchAllListings();
+    }, []);
+
+    // Client-side filtering
+    useEffect(() => {
+        let filtered = [...allListings];
+
+        // Filter by category
+        if (selectedCategoryId) {
+            filtered = filtered.filter(listing => listing.category_id === selectedCategoryId);
         }
-    }, [currentPage, searchQuery, selectedCategory, minPrice, maxPrice, selectedWear, selectedSpecial, itemsPerPage]);
 
-    // Load items on mount
-    useEffect(() => {
-        setCurrentPage(1);
-        loadItems(1, true);
-    }, [loadItems]);
-
-    // Load items when filters change (reset to page 1)
-    useEffect(() => {
-        setCurrentPage(1);
-        loadItems(1, true);
-    }, [selectedCategory, minPrice, maxPrice, selectedWear, selectedSpecial, loadItems]);
-
-    // Debounced search (reset to page 1)
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setCurrentPage(1);
-            loadItems(1, true);
-        }, 500);
-
-        return () => clearTimeout(timer);
-    }, [searchQuery, loadItems]);
-
-    // Load more items function
-    const loadMore = () => {
-        if (hasMore && !isLoading) {
-            loadItems(currentPage + 1, false);
+        // Filter by subcategory
+        if (selectedSubcategoryId) {
+            filtered = filtered.filter(listing => listing.subcategory_id === selectedSubcategoryId);
         }
-    };
+
+        // Filter by price range
+        if (minPrice !== undefined) {
+            filtered = filtered.filter(listing => listing.price >= minPrice);
+        }
+        if (maxPrice !== undefined) {
+            filtered = filtered.filter(listing => listing.price <= maxPrice);
+        }
+
+        // Filter by search query
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase().trim();
+            filtered = filtered.filter(listing =>
+                listing.title.toLowerCase().includes(query) ||
+                listing.description?.toLowerCase().includes(query) ||
+                listing.category?.name.toLowerCase().includes(query) ||
+                listing.subcategory?.name.toLowerCase().includes(query)
+            );
+        }
+
+        setFilteredListings(filtered);
+        setCurrentPage(1); // Reset to first page when filters change
+    }, [allListings, selectedCategoryId, selectedSubcategoryId, minPrice, maxPrice, searchQuery]);
+
+    // Paginate filtered listings
+    const paginatedListings = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        return filteredListings.slice(startIndex, endIndex);
+    }, [filteredListings, currentPage, itemsPerPage]);
+
+    const totalPages = Math.ceil(filteredListings.length / itemsPerPage);
 
     return (
         <div className="min-h-screen bg-background">
@@ -132,6 +190,7 @@ export default function MarketPage() {
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="pl-10"
+                                disabled={isLoading}
                             />
                         </div>
                         <Button
@@ -144,12 +203,21 @@ export default function MarketPage() {
                         </Button>
                     </div>
 
-                    {/* Results Count */}
-                    {totalCount > 0 && (
-                        <div className="text-sm text-muted-foreground">
-                            Showing {items.length} of {totalCount} items
-                        </div>
-                    )}
+                    {/* Results Count and Loading State */}
+                    <div className="flex items-center justify-between">
+                        {!isLoading && (
+                            <div className="text-sm text-muted-foreground">
+                                Showing {paginatedListings.length} of {filteredListings.length} listings
+                                {filteredListings.length !== allListings.length && ` (${allListings.length} total)`}
+                            </div>
+                        )}
+                        {isLoading && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <span>Loading listings...</span>
+                            </div>
+                        )}
+                    </div>
 
                     {/* Advanced Filters Panel */}
                     {showFilters && (
@@ -170,7 +238,7 @@ export default function MarketPage() {
                                 </Button>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {/* Price Range */}
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">Price Range</label>
@@ -181,6 +249,7 @@ export default function MarketPage() {
                                             value={minPrice || ""}
                                             onChange={(e) => setMinPrice(e.target.value ? Number(e.target.value) : undefined)}
                                             className="w-full"
+                                            disabled={isLoading}
                                         />
                                         <Input
                                             type="number"
@@ -188,55 +257,8 @@ export default function MarketPage() {
                                             value={maxPrice || ""}
                                             onChange={(e) => setMaxPrice(e.target.value ? Number(e.target.value) : undefined)}
                                             className="w-full"
+                                            disabled={isLoading}
                                         />
-                                    </div>
-                                </div>
-
-                                {/* Wear Condition */}
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">Wear Condition</label>
-                                    <div className="flex flex-wrap gap-1">
-                                        {wearOptions.map((wear) => (
-                                            <Button
-                                                key={wear}
-                                                variant={selectedWear.includes(wear) ? "default" : "outline"}
-                                                size="sm"
-                                                onClick={() => {
-                                                    setSelectedWear(prev =>
-                                                        prev.includes(wear)
-                                                            ? prev.filter(w => w !== wear)
-                                                            : [...prev, wear]
-                                                    );
-                                                }}
-                                                className="text-xs"
-                                            >
-                                                {wear}
-                                            </Button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Special Properties */}
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">Special Properties</label>
-                                    <div className="flex flex-wrap gap-1">
-                                        {specialOptions.map((special) => (
-                                            <Button
-                                                key={special}
-                                                variant={selectedSpecial.includes(special) ? "default" : "outline"}
-                                                size="sm"
-                                                onClick={() => {
-                                                    setSelectedSpecial(prev =>
-                                                        prev.includes(special)
-                                                            ? prev.filter(s => s !== special)
-                                                            : [...prev, special]
-                                                    );
-                                                }}
-                                                className="text-xs"
-                                            >
-                                                {special}
-                                            </Button>
-                                        ))}
                                     </div>
                                 </div>
                             </div>
@@ -249,10 +271,10 @@ export default function MarketPage() {
                                     onClick={() => {
                                         setMinPrice(undefined);
                                         setMaxPrice(undefined);
-                                        setSelectedWear([]);
-                                        setSelectedSpecial([]);
+                                        setSelectedCategoryId(null);
+                                        setSelectedSubcategoryId(null);
                                         setCurrentPage(1);
-                                        loadItems(1, true);
+                                        loadListings(1);
                                     }}
                                 >
                                     Clear Filters
@@ -265,61 +287,67 @@ export default function MarketPage() {
                     <motion.div variants={fadeInUp} className="space-y-4">
                         <div className="flex flex-wrap gap-2">
                             <Button
-                                variant={selectedCategory === "" ? "default" : "outline"}
+                                variant={selectedCategoryId === null ? "default" : "outline"}
                                 size="sm"
-                                onClick={() => setSelectedCategory("")}
+                                onClick={() => {
+                                    setSelectedCategoryId(null);
+                                    setSelectedSubcategoryId(null);
+                                }}
+                                disabled={isLoading}
                             >
                                 All Items
                             </Button>
-                            {categories.map((category) => (
-                                <Button
-                                    key={category}
-                                    variant={selectedCategory === category ? "default" : "outline"}
-                                    size="sm"
-                                    onClick={() => setSelectedCategory(category)}
-                                >
-                                    {category}
-                                </Button>
-                            ))}
+                            {loadingCategories ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                                categories.map((category) => (
+                                    <Button
+                                        key={category.id}
+                                        variant={selectedCategoryId === category.id ? "default" : "outline"}
+                                        size="sm"
+                                        onClick={() => {
+                                            setSelectedCategoryId(category.id);
+                                            setSelectedSubcategoryId(null);
+                                        }}
+                                        disabled={isLoading}
+                                    >
+                                        {category.name}
+                                    </Button>
+                                ))
+                            )}
                         </div>
                     </motion.div>
 
-                    {/* Filter Tabs */}
-                    <motion.div variants={fadeInUp}>
-                        <div className="flex gap-2">
-                            {filters.map((filter) => (
+                    {/* Subcategory Navigation */}
+                    {selectedCategoryId && subcategories.length > 0 && (
+                        <motion.div variants={fadeInUp} className="space-y-4">
+                            <div className="flex flex-wrap gap-2">
                                 <Button
-                                    key={filter}
-                                    variant={selectedFilter === filter ? "default" : "outline"}
+                                    variant={selectedSubcategoryId === null ? "default" : "outline"}
                                     size="sm"
-                                    onClick={() => {
-                                        setSelectedFilter(filter);
-                                        // Apply filter logic
-                                        if (filter === "Best Deals") {
-                                            // Show items with price drops
-                                            setSelectedSpecial(["Highlight"]);
-                                        } else if (filter === "Sticker Combos") {
-                                            // This would need more complex logic for sticker detection
-                                            setSelectedSpecial([]);
-                                        } else if (filter === "Unique Items") {
-                                            // Show StatTrak and Souvenir items
-                                            setSelectedSpecial(["StatTrak™", "Souvenir"]);
-                                        } else {
-                                            // All Items - clear special filters
-                                            setSelectedSpecial([]);
-                                        }
-                                    }}
+                                    onClick={() => setSelectedSubcategoryId(null)}
+                                    disabled={isLoading}
                                 >
-                                    {filter}
+                                    All {categories.find(c => c.id === selectedCategoryId)?.name || "Items"}
                                 </Button>
-                            ))}
-                        </div>
-                    </motion.div>
+                                {subcategories.map((subcategory) => (
+                                    <Button
+                                        key={subcategory.id}
+                                        variant={selectedSubcategoryId === subcategory.id ? "default" : "outline"}
+                                        size="sm"
+                                        onClick={() => setSelectedSubcategoryId(subcategory.id)}
+                                        disabled={isLoading}
+                                    >
+                                        {subcategory.name}
+                                    </Button>
+                                ))}
+                            </div>
+                        </motion.div>
+                    )}
 
-
-                    {/* Items Grid */}
+                    {/* Listings Grid */}
                     <div>
-                        {isLoading && items.length === 0 ? (
+                        {isLoading ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
                                 {Array.from({ length: 12 }).map((_, index) => (
                                     <div key={index} className="animate-pulse">
@@ -337,23 +365,22 @@ export default function MarketPage() {
                         ) : error ? (
                             <div className="text-center py-12">
                                 <p className="text-red-500 mb-4">Error: {error}</p>
-                                <Button onClick={() => loadItems(1, true)} variant="outline">
+                                <Button onClick={() => window.location.reload()} variant="outline">
                                     Try Again
                                 </Button>
                             </div>
-                        ) : items.length === 0 ? (
+                        ) : filteredListings.length === 0 ? (
                             <div className="text-center py-12">
-                                <p className="text-muted-foreground">No items found matching your criteria.</p>
+                                <p className="text-muted-foreground">No listings found matching your criteria.</p>
                                 <Button
                                     variant="outline"
                                     className="mt-4"
                                     onClick={() => {
                                         setSearchQuery("");
-                                        setSelectedCategory("");
+                                        setSelectedCategoryId(null);
+                                        setSelectedSubcategoryId(null);
                                         setMinPrice(undefined);
                                         setMaxPrice(undefined);
-                                        setSelectedWear([]);
-                                        setSelectedSpecial([]);
                                     }}
                                 >
                                     Clear Filters
@@ -361,9 +388,9 @@ export default function MarketPage() {
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-                                {items.map((item, index) => (
+                                {paginatedListings.map((listing, index) => (
                                     <motion.div
-                                        key={item.id}
+                                        key={listing.id}
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{
@@ -371,21 +398,8 @@ export default function MarketPage() {
                                             delay: index * 0.05,
                                             ease: "easeOut"
                                         }}
-                                        whileHover={{ y: -4 }}
                                     >
-                                        <ItemCard
-                                            name={item.name}
-                                            condition={item.condition}
-                                            price={item.price}
-                                            priceChange={item.priceChange}
-                                            floatValue={item.floatValue}
-                                            patternIndex={item.patternIndex}
-                                            imageUrl={item.imageUrl}
-                                            isStatTrak={item.isStatTrak}
-                                            isSouvenir={item.isSouvenir}
-                                            status={item.status}
-                                            rarity={item.rarity}
-                                        />
+                                        <ListingCard listing={listing} imageUrl={listing.imageUrl} />
                                     </motion.div>
                                 ))}
                             </div>
@@ -394,34 +408,28 @@ export default function MarketPage() {
                 </motion.div>
             </div>
 
-            {/* Pagination Controls - Outside motion.div */}
-            {items.length > 0 && (
+            {/* Pagination Controls */}
+            {!isLoading && filteredListings.length > 0 && (
                 <div className="flex items-center justify-center space-x-4 py-8">
-                    {hasMore ? (
+                    <div className="flex items-center gap-2">
                         <Button
-                            onClick={loadMore}
-                            disabled={isLoading}
+                            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                            disabled={currentPage === 1}
                             variant="outline"
-                            className="flex items-center gap-2"
                         >
-                            {isLoading ? (
-                                <>
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                    Loading...
-                                </>
-                            ) : (
-                                <>
-                                    Load More Items
-                                    <ChevronRight className="w-4 h-4" />
-                                </>
-                            )}
+                            Previous
                         </Button>
-                    ) : (
-                        <div className="text-center text-muted-foreground">
-                            <p>You&apos;ve reached the end of the results</p>
-                            <p className="text-sm">Showing all {totalCount} items</p>
-                        </div>
-                    )}
+                        <span className="text-sm text-muted-foreground">
+                            Page {currentPage} of {totalPages || 1}
+                        </span>
+                        <Button
+                            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                            disabled={currentPage >= totalPages}
+                            variant="outline"
+                        >
+                            Next
+                        </Button>
+                    </div>
                 </div>
             )}
         </div>

@@ -12,9 +12,14 @@ interface ChatRoom {
     id: string;
     participant1_id: string;
     participant2_id: string;
+    listing_id: string | null;
     last_message_at: string | null;
     created_at: string;
     other_user: Profile;
+    listing?: {
+        id: string;
+        title: string;
+    };
     last_message?: {
         content: string;
         sender_id: string;
@@ -46,7 +51,7 @@ export function ChatList({ userId, selectedChatRoomId, onSelectChatRoom }: ChatL
 
                 if (error) throw error;
 
-                // Fetch the other user's profile for each room
+                // Fetch the other user's profile and listing info for each room
                 const roomsWithProfiles = await Promise.all(
                     (rooms || []).map(async (room) => {
                         const otherUserId =
@@ -61,6 +66,17 @@ export function ChatList({ userId, selectedChatRoomId, onSelectChatRoom }: ChatL
                             .eq("user_id", otherUserId)
                             .single();
 
+                        // Get listing info if this is a listing-specific chat
+                        let listing = undefined;
+                        if (room.listing_id) {
+                            const { data: listingData } = await supabase
+                                .from("listings")
+                                .select("id, title")
+                                .eq("id", room.listing_id)
+                                .single();
+                            listing = listingData || undefined;
+                        }
+
                         // Get last message
                         const { data: lastMessage } = await supabase
                             .from("messages")
@@ -73,6 +89,7 @@ export function ChatList({ userId, selectedChatRoomId, onSelectChatRoom }: ChatL
                         return {
                             ...room,
                             other_user: profile,
+                            listing,
                             last_message: lastMessage || undefined,
                         };
                     })
@@ -173,9 +190,16 @@ export function ChatList({ userId, selectedChatRoomId, onSelectChatRoom }: ChatL
                                 {/* Content */}
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center justify-between mb-1">
-                                        <h3 className="font-semibold truncate">
-                                            {displayName}
-                                        </h3>
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="font-semibold truncate">
+                                                {displayName}
+                                            </h3>
+                                            {room.listing && (
+                                                <p className="text-xs text-muted-foreground truncate mt-0.5">
+                                                    {room.listing.title}
+                                                </p>
+                                            )}
+                                        </div>
                                         {room.last_message_at && (
                                             <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
                                                 {formatDistanceToNow(

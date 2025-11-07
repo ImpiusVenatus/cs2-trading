@@ -10,6 +10,8 @@ export async function GET(request: Request) {
         const categoryId = searchParams.get("category_id");
         const subcategoryId = searchParams.get("subcategory_id");
         const weaponTypeId = searchParams.get("weapon_type_id");
+        const minPrice = searchParams.get("min_price");
+        const maxPrice = searchParams.get("max_price");
         const status = searchParams.get("status") || "active";
         const limit = parseInt(searchParams.get("limit") || "20");
         const offset = parseInt(searchParams.get("offset") || "0");
@@ -42,12 +44,35 @@ export async function GET(request: Request) {
         if (weaponTypeId) {
             query = query.eq("weapon_type_id", weaponTypeId);
         }
+        if (minPrice) {
+            query = query.gte("price", parseFloat(minPrice));
+        }
+        if (maxPrice) {
+            query = query.lte("price", parseFloat(maxPrice));
+        }
 
         const { data, error } = await query;
 
         if (error) {
+            console.error("Error fetching listings:", error);
             return NextResponse.json({ error: error.message }, { status: 500 });
         }
+
+        // Fetch seller profiles for listings
+        const listingsWithSellers = await Promise.all(
+            (data || []).map(async (listing) => {
+                const { data: sellerProfile } = await supabase
+                    .from("profiles")
+                    .select("full_name, email")
+                    .eq("user_id", listing.seller_id)
+                    .single();
+                
+                return {
+                    ...listing,
+                    seller: sellerProfile || null,
+                };
+            })
+        );
 
         // Get total count for pagination
         let countQuery = supabase
@@ -67,11 +92,17 @@ export async function GET(request: Request) {
         if (weaponTypeId) {
             countQuery = countQuery.eq("weapon_type_id", weaponTypeId);
         }
+        if (minPrice) {
+            countQuery = countQuery.gte("price", parseFloat(minPrice));
+        }
+        if (maxPrice) {
+            countQuery = countQuery.lte("price", parseFloat(maxPrice));
+        }
 
         const { count } = await countQuery;
 
         return NextResponse.json({
-            listings: data || [],
+            listings: listingsWithSellers || [],
             total: count || 0,
             limit,
             offset,

@@ -18,6 +18,7 @@ export async function GET(request: Request) {
 
         const { searchParams } = new URL(request.url);
         const otherUserId = searchParams.get("otherUserId");
+        const listingId = searchParams.get("listingId");
 
         if (!otherUserId) {
             return NextResponse.json(
@@ -39,13 +40,20 @@ export async function GET(request: Request) {
         const participant2Id =
             user.id < otherUserId ? otherUserId : user.id;
 
-        // Check if chat room already exists
-        const { data: existingRoom, error: findError } = await supabase
+        // Check if chat room already exists for this listing (or without listing if listingId is null)
+        let existingRoomQuery = supabase
             .from("chat_rooms")
             .select("*")
             .eq("participant1_id", participant1Id)
-            .eq("participant2_id", participant2Id)
-            .single();
+            .eq("participant2_id", participant2Id);
+
+        if (listingId) {
+            existingRoomQuery = existingRoomQuery.eq("listing_id", listingId);
+        } else {
+            existingRoomQuery = existingRoomQuery.is("listing_id", null);
+        }
+
+        const { data: existingRoom, error: findError } = await existingRoomQuery.single();
 
         if (findError && findError.code !== "PGRST116") {
             // PGRST116 is "not found" error, which is expected
@@ -62,6 +70,7 @@ export async function GET(request: Request) {
             .insert({
                 participant1_id: participant1Id,
                 participant2_id: participant2Id,
+                listing_id: listingId || null,
             })
             .select()
             .single();

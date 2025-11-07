@@ -305,6 +305,7 @@ export interface Database {
                     id: string;
                     participant1_id: string;
                     participant2_id: string;
+                    listing_id: string | null;
                     last_message_at: string | null;
                     created_at: string;
                     updated_at: string;
@@ -313,6 +314,7 @@ export interface Database {
                     id?: string;
                     participant1_id: string;
                     participant2_id: string;
+                    listing_id?: string | null;
                     last_message_at?: string | null;
                     created_at?: string;
                     updated_at?: string;
@@ -321,6 +323,7 @@ export interface Database {
                     id?: string;
                     participant1_id?: string;
                     participant2_id?: string;
+                    listing_id?: string | null;
                     last_message_at?: string | null;
                     created_at?: string;
                     updated_at?: string;

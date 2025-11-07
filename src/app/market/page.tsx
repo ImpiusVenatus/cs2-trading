@@ -105,9 +105,25 @@ export default function MarketPage() {
                                 if (imageResponse.ok) {
                                     const imageData = await imageResponse.json();
                                     imageUrl = imageData.url;
+                                } else {
+                                    // If image URL fetch fails, try to construct public URL directly
+                                    const urlStr = listing.image_urls[0];
+                                    if (urlStr.includes('storage/v1/object')) {
+                                        // Extract path and construct public URL
+                                        const pathMatch = urlStr.match(/\/user-files\/(.+)$/);
+                                        if (pathMatch) {
+                                            imageUrl = urlStr.replace(/\/storage\/v1\/object\/[^\/]+/, '/storage/v1/object/public');
+                                        } else {
+                                            imageUrl = urlStr;
+                                        }
+                                    } else {
+                                        imageUrl = urlStr;
+                                    }
                                 }
                             } catch (error) {
                                 console.error(`Error fetching image for listing ${listing.id}:`, error);
+                                // Fallback to original URL
+                                imageUrl = listing.image_urls[0];
                             }
                         }
                         // Transform category/subcategory to match ListingCard expected format

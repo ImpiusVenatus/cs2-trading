@@ -4,27 +4,38 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { Package, Loader2 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
-import type { Listing } from "@/lib/supabase/types";
+import { ListingCard } from "@/components/market/listing-card";
+import type { Listing, ListingCategory, ListingSubcategory, ListingWeaponType } from "@/lib/supabase/types";
+
+// Extended type for listings with nested category/subcategory objects from API
+type ListingWithRelations = Listing & {
+    imageUrl?: string;
+    category?: ListingCategory | null;
+    subcategory?: ListingSubcategory | null;
+    weapon_type?: ListingWeaponType | null;
+};
 
 export function FeaturedItems() {
     const router = useRouter();
-    const [latestListings, setLatestListings] = useState<(Listing & { imageUrl?: string })[]>([]);
+    const [latestListings, setLatestListings] = useState<ListingWithRelations[]>([]);
     const [loadingListings, setLoadingListings] = useState(true);
 
     useEffect(() => {
         const fetchLatestListings = async () => {
             try {
-                const response = await fetch(`/api/listings?status=active&limit=5&offset=0`);
-                if (!response.ok) throw new Error("Failed to fetch listings");
+                const response = await fetch(`/api/listings?status=active&limit=6&offset=0`);
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || "Failed to fetch listings");
+                }
                 const data = await response.json();
                 const fetchedListings = data.listings || [];
 
-                // Fetch image URLs for listings with images
+                // Fetch image URLs for listings with images and transform to match ListingCard props
                 const listingsWithImages = await Promise.all(
-                    fetchedListings.map(async (listing: Listing) => {
+                    fetchedListings.map(async (listing: ListingWithRelations) => {
                         let imageUrl: string | undefined;
                         if (listing.image_urls && listing.image_urls.length > 0) {
                             try {
@@ -36,18 +47,43 @@ export function FeaturedItems() {
                                 if (imageResponse.ok) {
                                     const imageData = await imageResponse.json();
                                     imageUrl = imageData.url;
+                                } else {
+                                    // If image URL fetch fails, try to construct public URL directly
+                                    const urlStr = listing.image_urls[0];
+                                    if (urlStr.includes('storage/v1/object')) {
+                                        // Extract path and construct public URL
+                                        const pathMatch = urlStr.match(/\/user-files\/(.+)$/);
+                                        if (pathMatch) {
+                                            imageUrl = urlStr.replace(/\/storage\/v1\/object\/[^\/]+/, '/storage/v1/object/public');
+                                        } else {
+                                            imageUrl = urlStr;
+                                        }
+                                    } else {
+                                        imageUrl = urlStr;
+                                    }
                                 }
                             } catch (error) {
                                 console.error(`Error fetching image for listing ${listing.id}:`, error);
+                                // Fallback to original URL
+                                imageUrl = listing.image_urls[0];
                             }
                         }
-                        return { ...listing, imageUrl };
+                        // Transform category/subcategory/weapon_type to match ListingCard expected format
+                        return {
+                            ...listing,
+                            imageUrl,
+                            category: listing.category ? { name: listing.category.name, slug: listing.category.slug } : null,
+                            subcategory: listing.subcategory ? { name: listing.subcategory.name, slug: listing.subcategory.slug } : null,
+                            weapon_type: listing.weapon_type ? { name: listing.weapon_type.name, slug: listing.weapon_type.slug } : null,
+                        };
                     })
                 );
 
                 setLatestListings(listingsWithImages);
             } catch (error) {
                 console.error("Error fetching latest listings:", error);
+                // Set empty array on error so empty state shows
+                setLatestListings([]);
             } finally {
                 setLoadingListings(false);
             }
@@ -55,23 +91,6 @@ export function FeaturedItems() {
 
         fetchLatestListings();
     }, []);
-
-    const formatPrice = (price: number, currency: string) => {
-        if (currency === "USD") {
-            return new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: 'USD',
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 2,
-            }).format(price);
-        }
-        return new Intl.NumberFormat('en-BD', {
-            style: 'currency',
-            currency: 'BDT',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 2,
-        }).format(price);
-    };
 
     return (
         <section className="py-20 bg-muted/30">
@@ -100,48 +119,21 @@ export function FeaturedItems() {
                             <p className="text-muted-foreground">No listings available at the moment</p>
                         </motion.div>
                     ) : (
-                        <motion.div variants={fadeInUp} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                        <motion.div variants={fadeInUp} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
                             {latestListings.map((listing, index) => (
                                 <motion.div
                                     key={listing.id}
                                     variants={fadeInUp}
                                     custom={index}
-                                    className="cursor-pointer"
-                                    onClick={() => router.push(`/market`)}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{
+                                        duration: 0.3,
+                                        delay: index * 0.05,
+                                        ease: "easeOut"
+                                    }}
                                 >
-                                    <Card className="h-full hover:shadow-lg transition-shadow">
-                                        <CardContent className="p-0">
-                                            {listing.imageUrl ? (
-                                                <div className="relative w-full h-48 bg-muted overflow-hidden">
-                                                    <img
-                                                        src={listing.imageUrl}
-                                                        alt={listing.title}
-                                                        className="w-full h-full object-cover"
-                                                        onError={(e) => {
-                                                            e.currentTarget.style.display = "none";
-                                                        }}
-                                                    />
-                                                </div>
-                                            ) : (
-                                                <div className="relative w-full h-48 bg-muted flex items-center justify-center">
-                                                    <Package className="w-12 h-12 text-muted-foreground/50" />
-                                                </div>
-                                            )}
-                                            <div className="p-4">
-                                                <h3 className="font-semibold text-sm mb-2 line-clamp-2 min-h-[2.5rem]">
-                                                    {listing.title}
-                                                </h3>
-                                                <p className="text-lg font-bold text-primary">
-                                                    {formatPrice(listing.price, listing.currency)}
-                                                </p>
-                                                {listing.condition && (
-                                                    <p className="text-xs text-muted-foreground mt-1">
-                                                        {listing.condition}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        </CardContent>
-                                    </Card>
+                                    <ListingCard listing={listing} imageUrl={listing.imageUrl} />
                                 </motion.div>
                             ))}
                         </motion.div>

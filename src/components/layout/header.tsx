@@ -21,13 +21,107 @@ export function Header() {
     const router = useRouter();
     const { user, loading } = useUser();
     const { profile } = useProfile();
+    const [desktopProfilePictureUrl, setDesktopProfilePictureUrl] = useState<string | null>(null);
+    const [mobileProfilePictureUrl, setMobileProfilePictureUrl] = useState<string | null>(null);
     const [desktopImageLoading, setDesktopImageLoading] = useState(true);
     const [mobileImageLoading, setMobileImageLoading] = useState(true);
 
-    // Reset loading state when profile picture URL changes
+    // Fetch fresh signed URL for desktop avatar
     useEffect(() => {
-        setDesktopImageLoading(true);
-        setMobileImageLoading(true);
+        const fetchProfilePictureUrl = async () => {
+            if (!profile?.profile_picture_url) {
+                setDesktopProfilePictureUrl(null);
+                setDesktopImageLoading(false);
+                return;
+            }
+
+            setDesktopImageLoading(true);
+
+            try {
+                // Check if it's a Supabase Storage URL (signed or public)
+                const supabaseUrlPattern = /\/storage\/v1\/object\/(?:public|sign)\/user-files\/(.+?)(?:\?|$)/;
+                const match = profile.profile_picture_url.match(supabaseUrlPattern);
+
+                if (match) {
+                    // Extract the storage path
+                    const storagePath = match[1];
+
+                    // Get a fresh signed URL from the API
+                    const response = await fetch("/api/files/profile-picture-url", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ storagePath }),
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        setDesktopProfilePictureUrl(data.url);
+                    } else {
+                        console.warn("Failed to get fresh signed URL for desktop, using original:", response.status);
+                        setDesktopProfilePictureUrl(profile.profile_picture_url);
+                    }
+                } else {
+                    // Not a Supabase Storage URL, use as is
+                    setDesktopProfilePictureUrl(profile.profile_picture_url);
+                }
+            } catch (error) {
+                console.error("Error fetching desktop profile picture URL:", error);
+                setDesktopProfilePictureUrl(profile.profile_picture_url);
+            } finally {
+                setDesktopImageLoading(false);
+            }
+        };
+
+        fetchProfilePictureUrl();
+    }, [profile?.profile_picture_url]);
+
+    // Fetch fresh signed URL for mobile avatar
+    useEffect(() => {
+        const fetchProfilePictureUrl = async () => {
+            if (!profile?.profile_picture_url) {
+                setMobileProfilePictureUrl(null);
+                setMobileImageLoading(false);
+                return;
+            }
+
+            setMobileImageLoading(true);
+
+            try {
+                // Check if it's a Supabase Storage URL (signed or public)
+                const supabaseUrlPattern = /\/storage\/v1\/object\/(?:public|sign)\/user-files\/(.+?)(?:\?|$)/;
+                const match = profile.profile_picture_url.match(supabaseUrlPattern);
+
+                if (match) {
+                    // Extract the storage path
+                    const storagePath = match[1];
+
+                    // Get a fresh signed URL from the API
+                    const response = await fetch("/api/files/profile-picture-url", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ storagePath }),
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        setMobileProfilePictureUrl(data.url);
+                    } else {
+                        console.warn("Failed to get fresh signed URL for mobile, using original:", response.status);
+                        setMobileProfilePictureUrl(profile.profile_picture_url);
+                    }
+                } else {
+                    // Not a Supabase Storage URL, use as is
+                    setMobileProfilePictureUrl(profile.profile_picture_url);
+                }
+            } catch (error) {
+                console.error("Error fetching mobile profile picture URL:", error);
+                setMobileProfilePictureUrl(profile.profile_picture_url);
+            } finally {
+                setMobileImageLoading(false);
+            }
+        };
+
+        fetchProfilePictureUrl();
     }, [profile?.profile_picture_url]);
 
     const handleSignOut = async () => {
@@ -78,12 +172,6 @@ export function Header() {
                             >
                                 Market
                             </Link>
-                            <Link
-                                href="/database"
-                                className="text-muted-foreground hover:text-foreground transition-colors"
-                            >
-                                Database
-                            </Link>
                             {user && (
                                 <Link
                                     href="/chat"
@@ -117,21 +205,21 @@ export function Header() {
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" size="sm" className="hidden sm:flex items-center gap-2 hover:text-white">
-                                            {profile?.profile_picture_url ? (
+                                            {desktopProfilePictureUrl ? (
                                                 <div className="relative w-6 h-6">
                                                     {desktopImageLoading && (
                                                         <div className="absolute inset-0 flex items-center justify-center">
                                                             <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                                                         </div>
                                                     )}
-                                                    <Image
-                                                        src={profile.profile_picture_url}
+                                                    <img
+                                                        src={desktopProfilePictureUrl}
                                                         alt="Profile"
-                                                        width={24}
-                                                        height={24}
-                                                        className="rounded-full object-cover"
-                                                        onLoad={() => setDesktopImageLoading(false)}
-                                                        onError={() => setDesktopImageLoading(false)}
+                                                        className="w-6 h-6 rounded-full object-cover"
+                                                        onError={(e) => {
+                                                            console.error("Desktop profile picture failed to load:", desktopProfilePictureUrl);
+                                                            e.currentTarget.style.display = "none";
+                                                        }}
                                                     />
                                                 </div>
                                             ) : (
@@ -167,21 +255,21 @@ export function Header() {
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" size="sm" className="md:hidden hover:text-white">
-                                            {profile?.profile_picture_url ? (
+                                            {mobileProfilePictureUrl ? (
                                                 <div className="relative w-6 h-6">
                                                     {mobileImageLoading && (
                                                         <div className="absolute inset-0 flex items-center justify-center">
                                                             <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                                                         </div>
                                                     )}
-                                                    <Image
-                                                        src={profile.profile_picture_url}
+                                                    <img
+                                                        src={mobileProfilePictureUrl}
                                                         alt="Profile"
-                                                        width={24}
-                                                        height={24}
-                                                        className="rounded-full object-cover"
-                                                        onLoad={() => setMobileImageLoading(false)}
-                                                        onError={() => setMobileImageLoading(false)}
+                                                        className="w-6 h-6 rounded-full object-cover"
+                                                        onError={(e) => {
+                                                            console.error("Mobile profile picture failed to load:", mobileProfilePictureUrl);
+                                                            e.currentTarget.style.display = "none";
+                                                        }}
                                                     />
                                                 </div>
                                             ) : (

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { motion } from "framer-motion";
-import { Package, Plus, AlertCircle, Store, Loader2 } from "lucide-react";
+import { Package, Plus, AlertCircle, Store, Loader2, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
@@ -12,14 +13,86 @@ import { BecomeSellerModal } from "./become-seller-modal";
 import { useProfile, useUser } from "@/lib/supabase/hooks";
 import { hasMinimumInfo, getMissingFields } from "@/lib/supabase/profile-utils";
 import { toast } from "sonner";
+import type { Listing } from "@/lib/supabase/types";
+
+interface ListingWithImageUrl extends Listing {
+    displayImageUrl?: string;
+}
 
 export function ListingsTab() {
     const router = useRouter();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isBecomeSellerModalOpen, setIsBecomeSellerModalOpen] = useState(false);
     const [isUpgrading, setIsUpgrading] = useState(false);
+    const [listings, setListings] = useState<ListingWithImageUrl[]>([]);
+    const [loadingListings, setLoadingListings] = useState(false);
+    const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
     const { user, loading: userLoading } = useUser();
     const { profile, loading: profileLoading, refetch } = useProfile();
+
+    const fetchListings = useCallback(async () => {
+        if (!user?.id) return;
+        setLoadingListings(true);
+        try {
+            const response = await fetch(`/api/listings?seller_id=${user.id}`);
+            if (!response.ok) throw new Error("Failed to fetch listings");
+            const data = await response.json();
+            const fetchedListings = data.listings || [];
+            setListings(fetchedListings);
+            
+            // Fetch image URLs for listings with images
+            const urlPromises = fetchedListings
+                .filter((listing: Listing) => listing.image_urls && listing.image_urls.length > 0)
+                .map(async (listing: Listing) => {
+                    const imageUrl = listing.image_urls![0];
+                    try {
+                        const urlResponse = await fetch("/api/listings/image-url", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ imageUrl }),
+                        });
+                        if (urlResponse.ok) {
+                            const urlData = await urlResponse.json();
+                            return { listingId: listing.id, url: urlData.url };
+                        }
+                    } catch (error) {
+                        console.error(`Error fetching image URL for listing ${listing.id}:`, error);
+                    }
+                    return { listingId: listing.id, url: imageUrl };
+                });
+            
+            const urlResults = await Promise.all(urlPromises);
+            const urlMap: Record<string, string> = {};
+            urlResults.forEach(({ listingId, url }) => {
+                urlMap[listingId] = url;
+            });
+            setImageUrls(urlMap);
+        } catch (error) {
+            console.error("Error fetching listings:", error);
+            toast.error("Failed to load listings");
+        } finally {
+            setLoadingListings(false);
+        }
+    }, [user?.id]);
+
+    // Fetch listings when user is available
+    useEffect(() => {
+        if (user?.id && (profile?.account_type === "seller" || profile?.account_type === "both")) {
+            fetchListings();
+        }
+    }, [user?.id, profile?.account_type, fetchListings]);
+
+    // Listen for refresh event
+    useEffect(() => {
+        const handleRefresh = () => {
+            console.log("Refresh listings event received");
+            if (user?.id && (profile?.account_type === "seller" || profile?.account_type === "both")) {
+                fetchListings();
+            }
+        };
+        window.addEventListener("refresh-listings", handleRefresh);
+        return () => window.removeEventListener("refresh-listings", handleRefresh);
+    }, [user?.id, profile?.account_type, fetchListings]);
 
     const handleBecomeSeller = async () => {
         try {
@@ -134,7 +207,16 @@ export function ListingsTab() {
                                 </CardContent>
                             </Card>
                         </motion.div>
-                    ) : (
+                    ) : loadingListings ? (
+                        <motion.div variants={fadeInUp}>
+                            <Card className="border-border/50">
+                                <CardContent className="flex flex-col items-center justify-center py-12">
+                                    <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                                    <p className="text-sm text-muted-foreground mt-4">Loading listings...</p>
+                                </CardContent>
+                            </Card>
+                        </motion.div>
+                    ) : listings.length === 0 ? (
                         <motion.div variants={fadeInUp}>
                             <Card className="border-border/50">
                                 <CardContent className="flex flex-col items-center justify-center py-12">
@@ -149,6 +231,56 @@ export function ListingsTab() {
                                     </Button>
                                 </CardContent>
                             </Card>
+                        </motion.div>
+                    ) : (
+                        <motion.div variants={fadeInUp} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {listings.map((listing) => {
+                                const displayImageUrl = imageUrls[listing.id] || (listing.image_urls && listing.image_urls[0]);
+                                return (
+                                <Card key={listing.id} className="border-border/50">
+                                    <CardContent className="p-0">
+                                        {displayImageUrl && (
+                                            <div className="relative w-full h-48 bg-muted overflow-hidden">
+                                                <img
+                                                    src={displayImageUrl}
+                                                    alt={listing.title}
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => {
+                                                        console.error("Image failed to load:", displayImageUrl);
+                                                        e.currentTarget.style.display = "none";
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
+                                        {!displayImageUrl && (
+                                            <div className="relative w-full h-48 bg-muted flex items-center justify-center">
+                                                <Package className="w-12 h-12 text-muted-foreground/50" />
+                                            </div>
+                                        )}
+                                        <div className="p-4">
+                                            <h3 className="font-semibold text-lg mb-2 line-clamp-2">{listing.title}</h3>
+                                            <p className="text-2xl font-bold mb-2">
+                                                {listing.price} {listing.currency}
+                                            </p>
+                                            {listing.condition && (
+                                                <p className="text-sm text-muted-foreground mb-2">
+                                                    Condition: {listing.condition}
+                                                </p>
+                                            )}
+                                            <div className="flex gap-2 mt-4">
+                                                <Button variant="outline" size="sm" className="flex-1">
+                                                    <Edit className="w-4 h-4 mr-2" />
+                                                    Edit
+                                                </Button>
+                                                <Button variant="destructive" size="sm" className="flex-1">
+                                                    <Trash2 className="w-4 h-4 mr-2" />
+                                                    Delete
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            )})}
                         </motion.div>
                     )
                 ) : isBuyer ? (

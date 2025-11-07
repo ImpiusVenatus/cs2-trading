@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import Image from "next/image";
 import { Camera, BadgeCheck, AlertCircle, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,11 +16,56 @@ export function ProfilePictureSection() {
     const [imageLoading, setImageLoading] = useState(true);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // Fetch fresh signed URL for profile picture
     useEffect(() => {
-        if (profile?.profile_picture_url) {
-            setProfilePictureUrl(profile.profile_picture_url);
-            setImageLoading(true); // Reset loading state when URL changes
-        }
+        const fetchProfilePictureUrl = async () => {
+            if (!profile?.profile_picture_url) {
+                setProfilePictureUrl(null);
+                setImageLoading(false);
+                return;
+            }
+
+            setImageLoading(true);
+
+            try {
+                // Check if it's a Supabase Storage URL (signed or public)
+                // Pattern matches: /storage/v1/object/public/user-files/... or /storage/v1/object/sign/user-files/...
+                const supabaseUrlPattern = /\/storage\/v1\/object\/(?:public|sign)\/user-files\/(.+?)(?:\?|$)/;
+                const match = profile.profile_picture_url.match(supabaseUrlPattern);
+
+                if (match) {
+                    // Extract the storage path (everything after user-files/)
+                    const storagePath = match[1];
+
+                    // Get a fresh signed URL from the API
+                    const response = await fetch("/api/files/profile-picture-url", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ storagePath }),
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        setProfilePictureUrl(data.url);
+                    } else {
+                        // If API fails, try using the original URL
+                        console.warn("Failed to get fresh signed URL, using original:", response.status);
+                        setProfilePictureUrl(profile.profile_picture_url);
+                    }
+                } else {
+                    // Not a Supabase Storage URL, use as is
+                    setProfilePictureUrl(profile.profile_picture_url);
+                }
+            } catch (error) {
+                console.error("Error fetching profile picture URL:", error);
+                // Fallback to original URL on any error
+                setProfilePictureUrl(profile.profile_picture_url);
+            } finally {
+                setImageLoading(false);
+            }
+        };
+
+        fetchProfilePictureUrl();
     }, [profile?.profile_picture_url]);
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -62,9 +106,8 @@ export function ProfilePictureSection() {
             }
 
             const data = await response.json();
-            setProfilePictureUrl(data.file.url);
             toast.success("Profile picture uploaded successfully");
-            
+
             // Refresh profile to get updated data
             window.location.reload();
         } catch (error) {
@@ -95,9 +138,8 @@ export function ProfilePictureSection() {
                 throw new Error(error.error || "Failed to remove profile picture");
             }
 
-            setProfilePictureUrl(null);
             toast.success("Profile picture removed");
-            
+
             // Refresh profile to get updated data
             window.location.reload();
         } catch (error) {
@@ -131,15 +173,18 @@ export function ProfilePictureSection() {
                                             <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                                         </div>
                                     )}
-                                    <Image
+                                    <img
                                         src={profilePictureUrl}
                                         alt="Profile"
-                                        width={96}
-                                        height={96}
                                         className="w-24 h-24 rounded-full object-cover border-2 border-border"
-                                        onLoad={() => setImageLoading(false)}
-                                        onError={() => setImageLoading(false)}
-                                        unoptimized
+                                        onError={(e) => {
+                                            console.error("Profile picture failed to load:", profilePictureUrl);
+                                            // Hide the broken image and let the placeholder show
+                                            const parent = e.currentTarget.parentElement;
+                                            if (parent) {
+                                                parent.style.display = "none";
+                                            }
+                                        }}
                                     />
                                 </div>
                             ) : (

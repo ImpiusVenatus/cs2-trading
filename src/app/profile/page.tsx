@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { User, Package, History, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,22 @@ const tabs = [
 
 export default function ProfilePage() {
     const [activeTab, setActiveTab] = useState<TabType>("profile");
+
+    // Listen for listing creation and switch to listings tab
+    useEffect(() => {
+        const handleListingCreated = () => {
+            console.log("Listing created event received, switching to listings tab");
+            setActiveTab("listings");
+            // Dispatch a refresh event after a delay to ensure the tab is mounted
+            setTimeout(() => {
+                console.log("Dispatching refresh-listings event");
+                window.dispatchEvent(new CustomEvent("refresh-listings"));
+            }, 200);
+        };
+
+        window.addEventListener("listing-created", handleListingCreated);
+        return () => window.removeEventListener("listing-created", handleListingCreated);
+    }, []);
 
     const renderTabContent = () => {
         switch (activeTab) {

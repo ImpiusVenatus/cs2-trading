@@ -24,12 +24,14 @@ export async function GET(request: Request) {
                 subcategory:listing_subcategories(*),
                 weapon_type:listing_weapon_types(*)
             `)
-            .eq("status", status)
             .order("created_at", { ascending: false })
             .range(offset, offset + limit - 1);
 
         if (sellerId) {
             query = query.eq("seller_id", sellerId);
+            // Sellers can see all their listings regardless of status
+        } else {
+            query = query.eq("status", status);
         }
         if (categoryId) {
             query = query.eq("category_id", categoryId);
@@ -133,11 +135,20 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
+
+        // category_id is now the listing type (CS2 Skins, Subscriptions, Referral Codes)
+        if (!body.category_id) {
+            return NextResponse.json(
+                { error: "category_id (listing type) is required" },
+                { status: 400 }
+            );
+        }
+
         const listingData: ListingInsert = {
             seller_id: user.id,
             category_id: body.category_id,
-            subcategory_id: body.subcategory_id || null,
-            weapon_type_id: body.weapon_type_id || null,
+            subcategory_id: body.subcategory_id ?? null,
+            weapon_type_id: body.weapon_type_id ?? null,
             title: body.title,
             description: body.description || null,
             price: parseFloat(body.price),

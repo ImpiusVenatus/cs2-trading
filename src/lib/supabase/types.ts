@@ -233,7 +233,7 @@ export interface Database {
                 Row: {
                     id: string;
                     seller_id: string;
-                    category_id: string;
+                    category_id: string | null;
                     subcategory_id: string | null;
                     weapon_type_id: string | null;
                     title: string;
@@ -256,7 +256,7 @@ export interface Database {
                 Insert: {
                     id?: string;
                     seller_id: string;
-                    category_id: string;
+                    category_id?: string | null;
                     subcategory_id?: string | null;
                     weapon_type_id?: string | null;
                     title: string;
@@ -279,7 +279,7 @@ export interface Database {
                 Update: {
                     id?: string;
                     seller_id?: string;
-                    category_id?: string;
+                    category_id?: string | null;
                     subcategory_id?: string | null;
                     weapon_type_id?: string | null;
                     title?: string;
@@ -368,6 +368,7 @@ export type FileInsert = Database["public"]["Tables"]["files"]["Insert"];
 export type FileUpdate = Database["public"]["Tables"]["files"]["Update"];
 
 export type ListingCategory = Database["public"]["Tables"]["listing_categories"]["Row"];
+export type ListingType = ListingCategory; // Use listing_categories as types
 export type ListingSubcategory = Database["public"]["Tables"]["listing_subcategories"]["Row"];
 export type ListingWeaponType = Database["public"]["Tables"]["listing_weapon_types"]["Row"];
 export type Listing = Database["public"]["Tables"]["listings"]["Row"];

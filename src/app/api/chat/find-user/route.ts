@@ -38,7 +38,7 @@ export async function GET(request: Request) {
             if (!functionError && userData && userData.length > 0) {
                 foundUser = userData[0];
             }
-        } catch (error) {
+        } catch {
             // Function doesn't exist yet, will use fallback
             console.log("Function not available, using fallback method");
         }

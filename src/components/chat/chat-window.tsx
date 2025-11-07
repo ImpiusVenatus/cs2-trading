@@ -3,9 +3,6 @@
 import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Send } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
 import { MessageInput } from "./message-input";
 import { MessageList } from "./message-list";
 import type { Profile } from "@/lib/supabase/types";

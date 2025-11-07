@@ -5,10 +5,11 @@ import type { ListingUpdate } from "@/lib/supabase/types";
 // GET - Get a single listing by ID
 export async function GET(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const supabase = await createClient();
+        const { id } = await params;
 
         const { data, error } = await supabase
             .from("listings")
@@ -18,7 +19,7 @@ export async function GET(
                 subcategory:listing_subcategories(*),
                 weapon_type:listing_weapon_types(*)
             `)
-            .eq("id", params.id)
+            .eq("id", id)
             .single();
 
         if (error) {
@@ -45,7 +46,7 @@ export async function GET(
 // PATCH - Update a listing
 export async function PATCH(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const supabase = await createClient();
@@ -57,11 +58,13 @@ export async function PATCH(
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
+        const { id } = await params;
+
         // Check if listing exists and belongs to user
         const { data: listing, error: fetchError } = await supabase
             .from("listings")
             .select("seller_id")
-            .eq("id", params.id)
+            .eq("id", id)
             .single();
 
         if (fetchError || !listing) {
@@ -105,7 +108,7 @@ export async function PATCH(
         const { data, error } = await supabase
             .from("listings")
             .update(updateData)
-            .eq("id", params.id)
+            .eq("id", id)
             .select(`
                 *,
                 category:listing_categories(*),
@@ -131,7 +134,7 @@ export async function PATCH(
 // DELETE - Delete a listing
 export async function DELETE(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const supabase = await createClient();
@@ -143,11 +146,13 @@ export async function DELETE(
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
+        const { id } = await params;
+
         // Check if listing exists and belongs to user
         const { data: listing, error: fetchError } = await supabase
             .from("listings")
             .select("seller_id")
-            .eq("id", params.id)
+            .eq("id", id)
             .single();
 
         if (fetchError || !listing) {
@@ -167,7 +172,7 @@ export async function DELETE(
         const { error } = await supabase
             .from("listings")
             .delete()
-            .eq("id", params.id);
+            .eq("id", id);
 
         if (error) {
             return NextResponse.json({ error: error.message }, { status: 500 });

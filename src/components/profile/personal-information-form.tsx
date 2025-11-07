@@ -140,16 +140,18 @@ export function PersonalInformationForm() {
             }
 
             // Optimistically update cached profile to prevent refetch/reset on tab change
-            setProfile({
-                ...(profile || ({} as any)),
-                full_name: formData.fullName || null,
-                phone: formData.phone || null,
-                address: formData.address || null,
-                division: formData.division || null,
-                district: formData.district || null,
-                postal_code: formData.postalCode || null,
-                bio: formData.bio || null,
-            } as any);
+            if (profile) {
+                setProfile({
+                    ...profile,
+                    full_name: formData.fullName || null,
+                    phone: formData.phone || null,
+                    address: formData.address || null,
+                    division: formData.division || null,
+                    district: formData.district || null,
+                    postal_code: formData.postalCode || null,
+                    bio: formData.bio || null,
+                });
+            }
 
             toast.success("Profile updated successfully");
         } catch (error) {

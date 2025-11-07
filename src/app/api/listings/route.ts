@@ -31,10 +31,9 @@ export async function GET(request: Request) {
 
         if (sellerId) {
             query = query.eq("seller_id", sellerId);
-            // Sellers can see all their listings regardless of status
-        } else {
-            query = query.eq("status", status);
         }
+        // Apply status filter for both seller-specific and general queries
+        query = query.eq("status", status);
         if (categoryId) {
             query = query.eq("category_id", categoryId);
         }
@@ -83,6 +82,7 @@ export async function GET(request: Request) {
         if (sellerId) {
             countQuery = countQuery.eq("seller_id", sellerId);
         }
+        // Status filter is already applied above
         if (categoryId) {
             countQuery = countQuery.eq("category_id", categoryId);
         }

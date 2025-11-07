@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Package, Plus, AlertCircle, Store, Loader2, Edit, Trash2 } from "lucide-react";
+import { Package, Plus, AlertCircle, Store, Loader2, Edit, Trash2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
@@ -27,6 +27,7 @@ export function ListingsTab() {
     const [listings, setListings] = useState<ListingWithImageUrl[]>([]);
     const [loadingListings, setLoadingListings] = useState(false);
     const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
+    const [closingListingId, setClosingListingId] = useState<string | null>(null);
     const { user, loading: userLoading } = useUser();
     const { profile, loading: profileLoading, refetch } = useProfile();
 
@@ -34,7 +35,8 @@ export function ListingsTab() {
         if (!user?.id) return;
         setLoadingListings(true);
         try {
-            const response = await fetch(`/api/listings?seller_id=${user.id}`);
+            // Only fetch active listings for the "My Listings" tab
+            const response = await fetch(`/api/listings?seller_id=${user.id}&status=active`);
             if (!response.ok) throw new Error("Failed to fetch listings");
             const data = await response.json();
             const fetchedListings = data.listings || [];
@@ -268,6 +270,47 @@ export function ListingsTab() {
                                                 </p>
                                             )}
                                             <div className="flex gap-2 mt-4">
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm" 
+                                                    className="flex-1"
+                                                    onClick={async () => {
+                                                        if (!listing.id) return;
+                                                        setClosingListingId(listing.id);
+                                                        try {
+                                                            const response = await fetch(`/api/listings/${listing.id}/close`, {
+                                                                method: "PATCH",
+                                                            });
+                                                            if (!response.ok) {
+                                                                const error = await response.json();
+                                                                throw new Error(error.error || "Failed to close listing");
+                                                            }
+                                                            toast.success("Listing marked as sold and moved to history");
+                                                            // Remove from active listings
+                                                            setListings(prev => prev.filter(l => l.id !== listing.id));
+                                                            // Dispatch event to refresh history tab
+                                                            window.dispatchEvent(new CustomEvent("refresh-history"));
+                                                        } catch (error) {
+                                                            console.error("Error closing listing:", error);
+                                                            toast.error(error instanceof Error ? error.message : "Failed to close listing");
+                                                        } finally {
+                                                            setClosingListingId(null);
+                                                        }
+                                                    }}
+                                                    disabled={closingListingId === listing.id}
+                                                >
+                                                    {closingListingId === listing.id ? (
+                                                        <>
+                                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                                            Closing...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <CheckCircle2 className="w-4 h-4 mr-2" />
+                                                            Mark as Sold
+                                                        </>
+                                                    )}
+                                                </Button>
                                                 <Button variant="outline" size="sm" className="flex-1">
                                                     <Edit className="w-4 h-4 mr-2" />
                                                     Edit

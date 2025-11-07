@@ -6,15 +6,11 @@ import {
     Percent,
     Gavel,
     Tag,
-    Clock,
-    Calculator,
     Star,
     CheckCircle,
     Gift
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
 
 const features = [
@@ -65,6 +61,7 @@ const reviews = {
 };
 
 export function FeaturesSection() {
+
     return (
         <section className="py-20">
             <div className="container mx-auto px-4">

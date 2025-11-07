@@ -1,92 +1,159 @@
 "use client";
-import Link from "next/link";
+
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ItemCard } from "@/components/ui/item-card";
+import { useRouter } from "next/navigation";
+import { Package, Loader2 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
-type FeaturedItem = {
-    id: string;
-    name: string;
-    condition: string;
-    price: number;
-    priceChange?: number;
-    floatValue?: string;
-    patternIndex?: string;
-    imageUrl?: string;
-    isStatTrak?: boolean;
-    isSouvenir?: boolean;
-    status?: "online" | "offline";
-    rarity?: string;
-};
-
-const placeholderItems: FeaturedItem[] = [
-    { id: "ph-1", name: "AK-47 | Redline", condition: "Field-Tested", price: 120.0, priceChange: -5.2, floatValue: "0.2200000000", patternIndex: "#131", imageUrl: "/assets/rifle.png", isStatTrak: false, isSouvenir: false, status: "online", rarity: "Classified" },
-    { id: "ph-2", name: "M4A1-S | Golden Coil", condition: "Minimal Wear", price: 310.0, priceChange: 1.1, floatValue: "0.0900000000", patternIndex: "#027", imageUrl: "/assets/rifle-2.png", isStatTrak: true, isSouvenir: false, status: "online", rarity: "Covert" },
-    { id: "ph-3", name: "AWP | Asiimov", condition: "Battle-Scarred", price: 210.0, priceChange: -0.8, floatValue: "0.7800000000", patternIndex: "#005", imageUrl: "/assets/rifle-3.png", isStatTrak: false, isSouvenir: false, status: "online", rarity: "Covert" },
-    { id: "ph-4", name: "Glock-18 | Water Elemental", condition: "Field-Tested", price: 35.0, priceChange: 0.0, floatValue: "0.2500000000", patternIndex: "#090", imageUrl: "/assets/rifle.png", isStatTrak: false, isSouvenir: false, status: "online", rarity: "Classified" },
-    { id: "ph-5", name: "Desert Eagle | Mecha Industries", condition: "Minimal Wear", price: 78.5, priceChange: 0.6, floatValue: "0.1200000000", patternIndex: "#064", imageUrl: "/assets/rifle-2.png", isStatTrak: false, isSouvenir: false, status: "online", rarity: "Classified" },
-    { id: "ph-6", name: "USP-S | Kill Confirmed", condition: "Field-Tested", price: 160.0, priceChange: -1.3, floatValue: "0.2900000000", patternIndex: "#012", imageUrl: "/assets/rifle-3.png", isStatTrak: true, isSouvenir: false, status: "online", rarity: "Covert" },
-    { id: "ph-7", name: "AK-47 | Case Hardened", condition: "Well-Worn", price: 245.0, priceChange: 0.9, floatValue: "0.4200000000", patternIndex: "#321", imageUrl: "/assets/rifle.png", isStatTrak: false, isSouvenir: false, status: "online", rarity: "Classified" },
-    { id: "ph-8", name: "M4A4 | Howl", condition: "Field-Tested", price: 1250.0, priceChange: 2.3, floatValue: "0.2300000000", patternIndex: "#014", imageUrl: "/assets/rifle-2.png", isStatTrak: false, isSouvenir: false, status: "online", rarity: "Contraband" },
-];
-
-const tabs = ["Top Deals", "Newest Listings", "Premium Items"];
+import type { Listing } from "@/lib/supabase/types";
 
 export function FeaturedItems() {
-    const items = placeholderItems;
+    const router = useRouter();
+    const [latestListings, setLatestListings] = useState<(Listing & { imageUrl?: string })[]>([]);
+    const [loadingListings, setLoadingListings] = useState(true);
+
+    useEffect(() => {
+        const fetchLatestListings = async () => {
+            try {
+                const response = await fetch(`/api/listings?status=active&limit=5&offset=0`);
+                if (!response.ok) throw new Error("Failed to fetch listings");
+                const data = await response.json();
+                const fetchedListings = data.listings || [];
+
+                // Fetch image URLs for listings with images
+                const listingsWithImages = await Promise.all(
+                    fetchedListings.map(async (listing: Listing) => {
+                        let imageUrl: string | undefined;
+                        if (listing.image_urls && listing.image_urls.length > 0) {
+                            try {
+                                const imageResponse = await fetch("/api/listings/image-url", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ imageUrl: listing.image_urls[0] }),
+                                });
+                                if (imageResponse.ok) {
+                                    const imageData = await imageResponse.json();
+                                    imageUrl = imageData.url;
+                                }
+                            } catch (error) {
+                                console.error(`Error fetching image for listing ${listing.id}:`, error);
+                            }
+                        }
+                        return { ...listing, imageUrl };
+                    })
+                );
+
+                setLatestListings(listingsWithImages);
+            } catch (error) {
+                console.error("Error fetching latest listings:", error);
+            } finally {
+                setLoadingListings(false);
+            }
+        };
+
+        fetchLatestListings();
+    }, []);
+
+    const formatPrice = (price: number, currency: string) => {
+        if (currency === "USD") {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2,
+            }).format(price);
+        }
+        return new Intl.NumberFormat('en-BD', {
+            style: 'currency',
+            currency: 'BDT',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2,
+        }).format(price);
+    };
 
     return (
-        <section className="py-20 bg-muted/20">
+        <section className="py-20 bg-muted/30">
             <div className="container mx-auto px-4">
                 <motion.div
                     variants={staggerContainer}
                     initial="initial"
                     whileInView="animate"
                     viewport={{ once: true }}
-                    className="space-y-12"
+                    className="space-y-8"
                 >
-                    {/* Section Header */}
                     <motion.div variants={fadeInUp} className="text-center space-y-4">
-                        <h2 className="text-4xl font-bold">Featured Listings</h2>
+                        <h2 className="text-4xl font-bold">Latest Listings</h2>
                         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                            Browse premium CS2 skins from verified sellers across Bangladesh
+                            Check out the newest items available on our platform
                         </p>
                     </motion.div>
 
-                    
+                    {loadingListings ? (
+                        <motion.div variants={fadeInUp} className="flex items-center justify-center py-12">
+                            <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
+                        </motion.div>
+                    ) : latestListings.length === 0 ? (
+                        <motion.div variants={fadeInUp} className="text-center py-12">
+                            <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                            <p className="text-muted-foreground">No listings available at the moment</p>
+                        </motion.div>
+                    ) : (
+                        <motion.div variants={fadeInUp} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                            {latestListings.map((listing, index) => (
+                                <motion.div
+                                    key={listing.id}
+                                    variants={fadeInUp}
+                                    custom={index}
+                                    className="cursor-pointer"
+                                    onClick={() => router.push(`/market`)}
+                                >
+                                    <Card className="h-full hover:shadow-lg transition-shadow">
+                                        <CardContent className="p-0">
+                                            {listing.imageUrl ? (
+                                                <div className="relative w-full h-48 bg-muted overflow-hidden">
+                                                    <img
+                                                        src={listing.imageUrl}
+                                                        alt={listing.title}
+                                                        className="w-full h-full object-cover"
+                                                        onError={(e) => {
+                                                            e.currentTarget.style.display = "none";
+                                                        }}
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <div className="relative w-full h-48 bg-muted flex items-center justify-center">
+                                                    <Package className="w-12 h-12 text-muted-foreground/50" />
+                                                </div>
+                                            )}
+                                            <div className="p-4">
+                                                <h3 className="font-semibold text-sm mb-2 line-clamp-2 min-h-[2.5rem]">
+                                                    {listing.title}
+                                                </h3>
+                                                <p className="text-lg font-bold text-primary">
+                                                    {formatPrice(listing.price, listing.currency)}
+                                                </p>
+                                                {listing.condition && (
+                                                    <p className="text-xs text-muted-foreground mt-1">
+                                                        {listing.condition}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </motion.div>
+                            ))}
+                        </motion.div>
+                    )}
 
-                    {/* Items Grid */}
-                    <motion.div
-                        variants={staggerContainer}
-                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6"
-                    >
-                        {items.map((item, index) => (
-                            <motion.div
-                                key={item.id}
-                                variants={fadeInUp}
-                                custom={index}
-                            >
-                                <ItemCard
-                                    name={item.name}
-                                    condition={item.condition}
-                                    price={item.price}
-                                    priceChange={item.priceChange}
-                                    floatValue={item.floatValue}
-                                    patternIndex={item.patternIndex}
-                                    imageUrl={item.imageUrl}
-                                    isStatTrak={item.isStatTrak}
-                                    isSouvenir={item.isSouvenir}
-                                    status={item.status}
-                                    rarity={item.rarity}
-                                />
-                            </motion.div>
-                        ))}
-                    </motion.div>
-
-                    {/* View All Button */}
                     <motion.div variants={fadeInUp} className="text-center">
-                        <Button size="lg" variant="outline" asChild>
-                            <Link href="/market">View All Items</Link>
+                        <Button
+                            onClick={() => router.push("/market")}
+                            variant="outline"
+                            size="lg"
+                        >
+                            View All Listings
                         </Button>
                     </motion.div>
                 </motion.div>
@@ -94,5 +161,3 @@ export function FeaturedItems() {
         </section>
     );
 }
-
-

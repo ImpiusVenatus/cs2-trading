@@ -59,12 +59,19 @@ export function ChatList({ userId, selectedChatRoomId, onSelectChatRoom }: ChatL
                                 ? room.participant2_id
                                 : room.participant1_id;
 
-                        // Get other user's profile
-                        const { data: profile } = await supabase
-                            .from("profiles")
-                            .select("*")
-                            .eq("user_id", otherUserId)
-                            .single();
+                        // Get other user's profile via API (bypasses RLS issues)
+                        let profile = null;
+                        try {
+                            const profileResponse = await fetch(`/api/chat/profile?userId=${otherUserId}`);
+                            if (profileResponse.ok) {
+                                const profileData = await profileResponse.json();
+                                profile = profileData.profile || null;
+                            } else {
+                                console.error(`Failed to fetch profile for user ${otherUserId}:`, profileResponse.statusText);
+                            }
+                        } catch (error) {
+                            console.error(`Error fetching profile for user ${otherUserId}:`, error);
+                        }
 
                         // Get listing info if this is a listing-specific chat
                         let listing = undefined;
@@ -88,7 +95,7 @@ export function ChatList({ userId, selectedChatRoomId, onSelectChatRoom }: ChatL
 
                         return {
                             ...room,
-                            other_user: profile,
+                            other_user: profile || null,
                             listing,
                             last_message: lastMessage || undefined,
                         };
@@ -169,7 +176,9 @@ export function ChatList({ userId, selectedChatRoomId, onSelectChatRoom }: ChatL
             <div className="flex-1 overflow-y-auto">
                 {chatRooms.map((room) => {
                     const displayName =
-                        room.other_user?.full_name || "Unknown User";
+                        room.other_user?.full_name ||
+                        room.other_user?.email?.split("@")[0] ||
+                        "Unknown User";
                     const initial = displayName.charAt(0).toUpperCase();
 
                     return (

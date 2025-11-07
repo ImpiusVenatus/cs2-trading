@@ -2,12 +2,20 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Search, SlidersHorizontal, Loader2, ChevronRight, X } from "lucide-react";
+import { Search, SlidersHorizontal, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ListingCard } from "@/components/market/listing-card";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
-import type { Listing, ListingCategory, ListingSubcategory } from "@/lib/supabase/types";
+import type { Listing, ListingCategory, ListingSubcategory, ListingWeaponType } from "@/lib/supabase/types";
+
+// Extended type for listings with nested category/subcategory objects from API
+type ListingWithRelations = Listing & {
+    imageUrl?: string;
+    category?: ListingCategory | null;
+    subcategory?: ListingSubcategory | null;
+    weapon_type?: ListingWeaponType | null;
+};
 import { toast } from "sonner";
 
 export default function MarketPage() {
@@ -24,8 +32,8 @@ export default function MarketPage() {
     const [loadingCategories, setLoadingCategories] = useState(true);
 
     // Listings state
-    const [allListings, setAllListings] = useState<(Listing & { imageUrl?: string })[]>([]);
-    const [filteredListings, setFilteredListings] = useState<(Listing & { imageUrl?: string })[]>([]);
+    const [allListings, setAllListings] = useState<ListingWithRelations[]>([]);
+    const [filteredListings, setFilteredListings] = useState<ListingWithRelations[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
@@ -83,9 +91,9 @@ export default function MarketPage() {
                 const data = await response.json();
                 const fetchedListings = data.listings || [];
 
-                // Fetch image URLs for listings
+                // Fetch image URLs for listings and transform to match ListingCard props
                 const listingsWithImages = await Promise.all(
-                    fetchedListings.map(async (listing: Listing) => {
+                    fetchedListings.map(async (listing: ListingWithRelations) => {
                         let imageUrl: string | undefined;
                         if (listing.image_urls && listing.image_urls.length > 0) {
                             try {
@@ -102,7 +110,14 @@ export default function MarketPage() {
                                 console.error(`Error fetching image for listing ${listing.id}:`, error);
                             }
                         }
-                        return { ...listing, imageUrl };
+                        // Transform category/subcategory to match ListingCard expected format
+                        return {
+                            ...listing,
+                            imageUrl,
+                            category: listing.category ? { name: listing.category.name, slug: listing.category.slug } : null,
+                            subcategory: listing.subcategory ? { name: listing.subcategory.name, slug: listing.subcategory.slug } : null,
+                            weapon_type: listing.weapon_type ? { name: listing.weapon_type.name, slug: listing.weapon_type.slug } : null,
+                        };
                     })
                 );
 
@@ -274,7 +289,7 @@ export default function MarketPage() {
                                         setSelectedCategoryId(null);
                                         setSelectedSubcategoryId(null);
                                         setCurrentPage(1);
-                                        loadListings(1);
+                                        // Filters will reset automatically via useEffect
                                     }}
                                 >
                                     Clear Filters

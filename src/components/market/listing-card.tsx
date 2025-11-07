@@ -12,10 +12,10 @@ import { toast } from "sonner";
 
 interface ListingCardProps {
     listing: Listing & {
-        category?: { name: string; slug: string };
-        subcategory?: { name: string; slug: string };
-        weapon_type?: { name: string; slug: string };
-        seller?: { full_name: string | null; email: string | null };
+        category?: { name: string; slug: string } | null;
+        subcategory?: { name: string; slug: string } | null;
+        weapon_type?: { name: string; slug: string } | null;
+        seller?: { full_name: string | null; email: string | null } | null;
     };
     imageUrl?: string;
 }

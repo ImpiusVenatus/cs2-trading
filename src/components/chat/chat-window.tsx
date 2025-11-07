@@ -49,15 +49,21 @@ export function ChatWindow({ chatRoomId, userId }: ChatWindowProps) {
                         ? room.participant2_id
                         : room.participant1_id;
 
-                // Get other user's profile
-                const { data: profile } = await supabase
-                    .from("profiles")
-                    .select("*")
-                    .eq("user_id", otherUserId)
-                    .single();
-
-                if (profile) {
-                    setOtherUser(profile);
+                // Get other user's profile via API (bypasses RLS issues)
+                try {
+                    const profileResponse = await fetch(`/api/chat/profile?userId=${otherUserId}`);
+                    if (profileResponse.ok) {
+                        const profileData = await profileResponse.json();
+                        if (profileData.profile) {
+                            setOtherUser(profileData.profile);
+                        } else {
+                            console.warn(`No profile found for user ${otherUserId}`);
+                        }
+                    } else {
+                        console.error(`Failed to fetch profile for user ${otherUserId}:`, profileResponse.statusText);
+                    }
+                } catch (error) {
+                    console.error(`Error fetching profile for user ${otherUserId}:`, error);
                 }
 
                 // Get listing info if this is a listing-specific chat
@@ -81,18 +87,23 @@ export function ChatWindow({ chatRoomId, userId }: ChatWindowProps) {
 
                 if (messagesError) throw messagesError;
 
-                // Get sender profiles for all messages
+                // Get sender profiles for all messages via API
                 const messagesWithProfiles = await Promise.all(
                     (messagesData || []).map(async (msg) => {
-                        const { data: senderProfile } = await supabase
-                            .from("profiles")
-                            .select("*")
-                            .eq("user_id", msg.sender_id)
-                            .single();
+                        let senderProfile = undefined;
+                        try {
+                            const profileResponse = await fetch(`/api/chat/profile?userId=${msg.sender_id}`);
+                            if (profileResponse.ok) {
+                                const profileData = await profileResponse.json();
+                                senderProfile = profileData.profile || undefined;
+                            }
+                        } catch (error) {
+                            console.error(`Error fetching sender profile for user ${msg.sender_id}:`, error);
+                        }
 
                         return {
                             ...msg,
-                            sender_profile: senderProfile || undefined,
+                            sender_profile: senderProfile,
                         };
                     })
                 );
@@ -130,12 +141,17 @@ export function ChatWindow({ chatRoomId, userId }: ChatWindowProps) {
             .on("broadcast", { event: "new_message" }, async (payload) => {
                 const newMessage = payload.payload as Message;
 
-                // Get sender profile
-                const { data: senderProfile } = await supabase
-                    .from("profiles")
-                    .select("*")
-                    .eq("user_id", newMessage.sender_id)
-                    .single();
+                // Get sender profile via API
+                let senderProfile = undefined;
+                try {
+                    const profileResponse = await fetch(`/api/chat/profile?userId=${newMessage.sender_id}`);
+                    if (profileResponse.ok) {
+                        const profileData = await profileResponse.json();
+                        senderProfile = profileData.profile || undefined;
+                    }
+                } catch (error) {
+                    console.error(`Error fetching sender profile for user ${newMessage.sender_id}:`, error);
+                }
 
                 setMessages((prev) => {
                     // Avoid duplicates
@@ -256,7 +272,10 @@ export function ChatWindow({ chatRoomId, userId }: ChatWindowProps) {
         );
     }
 
-    const displayName = otherUser?.full_name || "Unknown User";
+    const displayName =
+        otherUser?.full_name ||
+        otherUser?.email?.split("@")[0] ||
+        "Unknown User";
     const initial = displayName.charAt(0).toUpperCase();
 
     return (
